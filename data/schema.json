@@ -1,0 +1,93 @@
+{
+  "fish": {
+    "name": "fish",
+    "embedding": {
+      "endpoint": "https://ai.mongodb.com/v1/multimodalembeddings",
+      "model": "voyage-multimodal-3.5",
+      "inputType": null,
+      "truncation": false,
+      "outputEncoding": null
+    },
+    "indexes": [
+        {
+          "key": { "active": 1 }
+        }
+      ],
+    "searchIndexes": [
+        {
+          "name": "fish_embedding",
+          "type": "vectorSearch",
+          "definition": {
+            "fields": [
+              {
+                "type": "vector",
+                "path": "embedding",
+                "numDimensions": 1024,
+                "similarity": "cosine"
+              },
+              {
+                "type": "filter",
+                "path": "active"
+              }
+            ]
+          }
+        }
+      ]
+  },
+  "assignments": {
+    "name": "assignments",
+    "indexes": [
+        {
+          "key": { "roundId": 1, "playerId": 1 },
+          "options": { "unique": true }
+        }
+      ]
+  },
+  "submissions": {
+    "name": "submissions",
+    "indexes": [
+        {
+          "key": {
+            "roundId": 1,
+            "status": 1,
+            "assignedFishSimilarity": -1,
+            "createdAt": 1
+          }
+        }
+      ]
+  },
+  "selfiesFiles": {
+    "name": "selfies.files",
+    "indexes": [
+        {
+          "key": { "filename": 1, "uploadDate": 1 }
+        }
+      ]
+  },
+  "selfiesChunks": {
+    "name": "selfies.chunks",
+    "indexes": [
+        {
+          "key": { "files_id": 1, "n": 1 },
+          "options": { "unique": true }
+        }
+      ]
+  },
+  "fishFiles": {
+    "name": "fish.files",
+    "indexes": [
+        {
+          "key": { "filename": 1, "uploadDate": 1 }
+        }
+      ]
+  },
+  "fishChunks": {
+    "name": "fish.chunks",
+    "indexes": [
+        {
+          "key": { "files_id": 1, "n": 1 },
+          "options": { "unique": true }
+        }
+      ]
+  }
+}
