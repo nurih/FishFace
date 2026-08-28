@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 const playerKey = "fishface-player-id";
 const nameKey = "fishface-full-name";
+const formatScore = (score) => (score * 100).toFixed(2);
 
 function getPlayerId() {
   let id = localStorage.getItem(playerKey);
@@ -193,31 +194,32 @@ export default function Home() {
           <label>Full name<input value={fullName} onChange={(event) => setFullName(event.target.value)} placeholder="Your full name" required /></label>
           <button>Meet your fish</button>
         </form> : <>
-          <div className="target">
-            <div><p className="eyebrow">YOUR TARGET</p><h2>{fish?.species}</h2><button className="secondary" onClick={rerollFish} disabled={ranking} type="button">Get another fish</button></div>
-            {fish?.imageUrl && <img src={fish.imageUrl} alt={fish.species} />}
-          </div>
           <div className="camera">
             {photo ? <img src={photoUrl} alt="Your captured FishFace" /> : <><video ref={attachVideo} autoPlay playsInline muted /><div className="crop-box">{countdown ? <span>{countdown}</span> : null}</div></>}
+            <div className="target">
+              {fish?.imageUrl && <img src={fish.imageUrl} alt={fish.species} />}
+              <strong>{fish?.species}</strong>
+            </div>
           </div>
           <label className="camera-picker">Camera<select value={deviceId} onChange={(event) => startCamera(event.target.value)}>
             {devices.map((device, index) => <option key={device.deviceId} value={device.deviceId}>{device.label || `Camera ${index + 1}`}</option>)}
           </select></label>
           <div className="actions">
+            <button className="secondary" onClick={rerollFish} disabled={ranking} type="button">Change fish</button>
             {!photo ? <button onClick={capture} disabled={countdown > 0} type="button">{countdown ? "Get ready…" : "Capture FishFace"}</button> : <>
               <button className="secondary" onClick={() => { URL.revokeObjectURL(photoUrl); setPhotoUrl(""); setPhoto(null); setPhotoDimensions(null); }} type="button">Retake</button>
               <button onClick={submit} disabled={ranking} type="button">{ranking ? "Ranking…" : "Score it"}</button>
             </>}
           </div>
-          {result && <p className="result">Your {Math.round(result.assignedFishSimilarity * 100)}% fish match is in the leaderboard.</p>}
+          {result && <p className="result">Your {formatScore(result.assignedFishSimilarity)}% fish match is in the leaderboard.</p>}
         </>}
         {error && <p className="error" role="alert">{error}</p>}
       </article>
       <aside className="card leaderboard">
         <p className="eyebrow">CURRENT ROUND</p><h2>Your latest capture</h2>
-        {currentEntry ? <div className="current-entry"><div><img src={currentEntry.imageUrl} alt="Your latest FishFace" /><img src={currentEntry.fish.imageUrl} alt={currentEntry.fish.species} /></div><p>{Math.round(currentEntry.score * 100)}% × {currentEntry.fish.species}</p></div> : <p>No scored capture yet.</p>}
+        {currentEntry ? <div className="current-entry"><div><img src={currentEntry.imageUrl} alt="Your latest FishFace" /><img src={currentEntry.fish.imageUrl} alt={currentEntry.fish.species} /></div><p>{formatScore(currentEntry.score)}% × {currentEntry.fish.species}</p></div> : <p>No scored capture yet.</p>}
         <p className="eyebrow">LIVE LEADERBOARD</p><h2>Current period</h2>
-        {entries.length ? <ol>{entries.map((entry) => <li key={entry.id}><span>{entry.fullName}</span><strong>{Math.round(entry.score * 100)}%</strong></li>)}</ol> : <p>No faces in the water yet.</p>}
+        {entries.length ? <ol>{entries.map((entry) => <li key={entry.id}><span>{entry.fullName}</span><strong>{formatScore(entry.score)}%</strong></li>)}</ol> : <p>No faces in the water yet.</p>}
       </aside>
     </section>
   </main>;
