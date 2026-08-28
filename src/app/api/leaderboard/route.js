@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { GridFSBucket, ObjectId } from "mongodb";
 import { getRound } from "@/lib/round";
 import { db } from "@/lib/mongo";
 import schema from "@/lib/schema";
@@ -34,5 +35,24 @@ export async function GET(request) {
     });
   } catch (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}
+
+export async function DELETE(request) {
+  try {
+    const id = new URL(request.url).searchParams.get("id");
+    if (!id || !ObjectId.isValid(id)) return NextResponse.json({ error: "A valid leaderboard entry is required." }, { status: 400 });
+    const database = await db();
+    const submissions = database.collection(schema.submissions.name);
+    const entry = await submissions.findOne({ _id: new ObjectId(id) });
+    if (!entry) return NextResponse.json({ error: "Leaderboard entry not found." }, { status: 404 });
+    await submissions.deleteOne({ _id: entry._id });
+    if (entry.selfieFileId) {
+      const bucket = new GridFSBucket(database, { bucketName: schema.selfiesFiles.name.replace(".files", "") });
+      await bucket.delete(entry.selfieFileId);
+    }
+    return NextResponse.json({ deleted: String(entry._id) });
+  } catch (error) {
+    return NextResponse.json({ error: error.message || "Unable to delete leaderboard entry." }, { status: 500 });
   }
 }

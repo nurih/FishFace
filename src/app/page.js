@@ -34,6 +34,8 @@ export default function Home() {
   const [currentEntry, setCurrentEntry] = useState(null);
   const [entries, setEntries] = useState([]);
   const [countdown, setCountdown] = useState(0);
+  const [systemsOpen, setSystemsOpen] = useState(false);
+  const [purgeMode, setPurgeMode] = useState(false);
 
   const stopCamera = useCallback(() => {
     streamRef.current?.getTracks().forEach((track) => track.stop());
@@ -113,6 +115,27 @@ export default function Home() {
     }
   };
 
+  const startNewRun = () => {
+    window.clearInterval(countdownTimerRef.current);
+    countdownTimerRef.current = null;
+    stopCamera();
+    if (photoUrl) URL.revokeObjectURL(photoUrl);
+    localStorage.removeItem(nameKey);
+    setCountdown(0); setFish(null); setPhoto(null); setPhotoUrl(""); setPhotoDimensions(null);
+    setResult(null); setFullName(""); setReady(false); setError(""); setSystemsOpen(false);
+  };
+
+  const deleteEntry = async (entry) => {
+    if (!window.confirm(`Delete ${entry.fullName}'s ${formatScore(entry.score)}% entry?`)) return;
+    setError("");
+    try {
+      const response = await fetch(`/api/leaderboard?id=${encodeURIComponent(entry.id)}`, { method: "DELETE" });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error);
+      await loadLeaderboard();
+    } catch (caught) { setError(caught.message || "Unable to delete this leaderboard entry."); }
+  };
+
   const snapPhoto = useCallback(() => {
     const video = videoRef.current;
     if (!video?.videoWidth || !video.clientWidth || !video.clientHeight) return;
@@ -185,30 +208,39 @@ export default function Home() {
 
   useEffect(() => () => { if (photoUrl) URL.revokeObjectURL(photoUrl); }, [photoUrl]);
 
-  return <main>
-    <header><p className="eyebrow">THE FOUR-HOUR FISH-OFF</p><h1>FishFace</h1><p>Make the face. Match the fish. Rule the reef.</p></header>
+  return <main className="command-deck">
+    <header className="masthead">
+      <div><p className="eyebrow">AQUATIC ANALOGUE // FOUR-HOUR FISH-OFF</p><h1><span>FISH</span>FACE</h1><p className="mission">Make the face. Match the fish. Rule the reef.</p></div>
+      <div className="header-controls"><p className="system-status"><span aria-hidden="true" />OPTICAL LINK {ready ? "ACTIVE" : "STANDBY"}</p><button className="cog-button" type="button" onClick={() => setSystemsOpen((open) => !open)} aria-expanded={systemsOpen} aria-controls="systems-panel" aria-label="Open systems controls">⚙</button></div>
+    </header>
+    {systemsOpen && <section className="systems-panel" id="systems-panel">
+      <p className="panel-code">AUXILIARY SYSTEMS</p>
+      <label className="camera-picker">Optical source<select value={deviceId} onChange={(event) => startCamera(event.target.value)} disabled={!ready}>
+        {devices.length ? devices.map((device, index) => <option key={device.deviceId} value={device.deviceId}>{device.label || `Camera ${index + 1}`}</option>) : <option>Start a run to connect a camera</option>}
+      </select></label>
+      <button className="secondary" onClick={startNewRun} type="button">Start new run</button>
+      <label className="purge-toggle"><input type="checkbox" checked={purgeMode} onChange={(event) => setPurgeMode(event.target.checked)} /> Enable leaderboard purge</label>
+    </section>}
     <section className="game-grid">
       <article className="card play-card">
         {!ready ? <form onSubmit={begin} className="start-form">
-          <h2>Ready to get weird?</h2>
-          <label>Full name<input value={fullName} onChange={(event) => setFullName(event.target.value)} placeholder="Your full name" required /></label>
-          <button>Meet your fish</button>
+          <p className="panel-code">01 // INTAKE</p><h2>Identify yourself, cadet.</h2>
+          <label>Full name<input value={fullName} onChange={(event) => setFullName(event.target.value)} placeholder="ENTER DESIGNATION" required /></label>
+          <button>Assign specimen</button>
         </form> : <>
           <div className="camera">
+            <p className="camera-readout">LIVE // FACE SCANNER</p>
             {photo ? <img src={photoUrl} alt="Your captured FishFace" /> : <><video ref={attachVideo} autoPlay playsInline muted /><div className="crop-box">{countdown ? <span>{countdown}</span> : null}</div></>}
-            <div className="target">
+            <div className="target"><p>ASSIGNED SPECIMEN</p>
               {fish?.imageUrl && <img src={fish.imageUrl} alt={fish.species} />}
               <strong>{fish?.species}</strong>
             </div>
           </div>
-          <label className="camera-picker">Camera<select value={deviceId} onChange={(event) => startCamera(event.target.value)}>
-            {devices.map((device, index) => <option key={device.deviceId} value={device.deviceId}>{device.label || `Camera ${index + 1}`}</option>)}
-          </select></label>
           <div className="actions">
-            <button className="secondary" onClick={rerollFish} disabled={ranking} type="button">Change fish</button>
-            {!photo ? <button onClick={capture} disabled={countdown > 0} type="button">{countdown ? "Get ready…" : "Capture FishFace"}</button> : <>
-              <button className="secondary" onClick={() => { URL.revokeObjectURL(photoUrl); setPhotoUrl(""); setPhoto(null); setPhotoDimensions(null); }} type="button">Retake</button>
-              <button onClick={submit} disabled={ranking} type="button">{ranking ? "Ranking…" : "Score it"}</button>
+            <button className="secondary" onClick={rerollFish} disabled={ranking} type="button">Switch specimen</button>
+            {!photo ? <button onClick={capture} disabled={countdown > 0} type="button">{countdown ? "Hold position…" : "Initiate capture"}</button> : <>
+              <button className="secondary" onClick={() => { URL.revokeObjectURL(photoUrl); setPhotoUrl(""); setPhoto(null); setPhotoDimensions(null); }} type="button">Retake scan</button>
+              <button onClick={submit} disabled={ranking} type="button">{ranking ? "Analyzing…" : "Run comparison"}</button>
             </>}
           </div>
           {result && <p className="result">Your {formatScore(result.assignedFishSimilarity)}% fish match is in the leaderboard.</p>}
@@ -216,10 +248,10 @@ export default function Home() {
         {error && <p className="error" role="alert">{error}</p>}
       </article>
       <aside className="card leaderboard">
-        <p className="eyebrow">CURRENT ROUND</p><h2>Your latest capture</h2>
+        <p className="panel-code">02 // TELEMETRY</p><p className="eyebrow">CURRENT ROUND</p><h2>Your latest capture</h2>
         {currentEntry ? <div className="current-entry"><div><img src={currentEntry.imageUrl} alt="Your latest FishFace" /><img src={currentEntry.fish.imageUrl} alt={currentEntry.fish.species} /></div><p>{formatScore(currentEntry.score)}% × {currentEntry.fish.species}</p></div> : <p>No scored capture yet.</p>}
         <p className="eyebrow">LIVE LEADERBOARD</p><h2>Current period</h2>
-        {entries.length ? <ol>{entries.map((entry) => <li key={entry.id}><span>{entry.fullName}</span><strong>{formatScore(entry.score)}%</strong></li>)}</ol> : <p>No faces in the water yet.</p>}
+        {entries.length ? <ol>{entries.map((entry) => <li key={entry.id}><span>{entry.fullName}</span><strong>{formatScore(entry.score)}%</strong>{purgeMode && <button className="purge-button" type="button" onClick={() => deleteEntry(entry)} aria-label={`Delete ${entry.fullName}'s leaderboard entry`}>PURGE</button>}</li>)}</ol> : <p>No faces in the water yet.</p>}
       </aside>
     </section>
   </main>;
