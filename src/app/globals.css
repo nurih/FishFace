@@ -189,6 +189,10 @@ input:focus, select:focus { border-color: #00e5ff; outline: 2px solid #00e5ff55;
   font-size: 0.85rem;
   margin-bottom: 0;
 }
+.repo-link { display: flex; justify-content: flex-end; margin-top: 1.25rem; }
+.repo-link a { align-items: center; color: #a8c8cf; display: inline-flex; font-size: .65rem; font-weight: 700; gap: .45rem; letter-spacing: .08em; text-decoration: none; }
+.repo-link a:hover, .repo-link a:focus-visible { color: #00e5ff; outline: none; text-decoration: underline; text-underline-offset: .25rem; }
+.repo-link svg { fill: currentColor; height: 1.15rem; width: 1.15rem; }
 @media (max-width: 760px) {
   main {
     padding-top: 2rem;
