@@ -14,18 +14,18 @@ The preprocessed fish catalog and submitted selfies SHALL use `voyage-multimodal
 - **WHEN** Atlas rejects or cannot process the image
 - **THEN** the server returns an error and the Play view remains available for retry
 
-## Requirement: Three persisted measures
+## Requirement: Target-relative result
 
-The system SHALL persist assigned-fish similarity, closest-catalog similarity, and exact assigned-fish rank for every successfully scored submission.
+The system SHALL compare each selfie against every active fish, persist the closest matching fish's public identity, exact assigned-fish rank, whether the target ranks first, and the target's score margin over the strongest non-target fish. Raw similarity values SHALL remain stored for diagnostics only.
 
 #### Scenario: Assigned fish is ranked
 
 - **WHEN** the selfie embedding is searched against the active fish catalog
-- **THEN** the system records the assigned fish's Vector Search score and one-based position among all catalog results
+- **THEN** the system records the closest fish, target rank, target-win result, and target margin
 
 ## Requirement: Active leaderboard score
 
-The active leaderboard SHALL rank scored submissions by assigned-fish similarity in the current round.
+The active leaderboard SHALL rank target wins before losses, then lower target rank, then higher target margin.
 
 #### Scenario: Player submits multiple attempts
 

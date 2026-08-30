@@ -1,6 +1,6 @@
 import { readdir } from "node:fs/promises";
 import { basename, extname } from "node:path";
-import { GridFSBucket, MongoClient } from "mongodb";
+import { MongoClient } from "mongodb";
 import { createImageEmbedding } from "../src/lib/atlas-ai.js";
 import schema from "../data/schema.json" with { type: "json" };
 
@@ -17,9 +17,8 @@ const client = new MongoClient(process.env.MONGO_URL);
 
 try {
   const database = client.db(process.env.MONGODB_DB);
-  await createFishDocuments(database);
   await prepareCollections(database);
-  await uploadImages(database);
+  await createFishDocuments(database);
 } finally {
   await client.close();
 }
@@ -40,29 +39,6 @@ async function createFishDocuments(database) {
       createdAt: new Date(),
     });
     console.log(`Created ${filename}`);
-  }
-}
-
-async function uploadImages(database) {
-  const imageDirectory = new URL("../data/fish/images/", import.meta.url);
-  const bucket = new GridFSBucket(database, { bucketName: schema.fish.name });
-  const fishFiles = database.collection(schema.fishFiles.name);
-  const fish = database.collection(schema.fish.name);
-  for (const filename of await readdir(imageDirectory)) {
-    const contentType = contentTypes[extname(filename).toLowerCase()];
-    if (!filename.startsWith("fish-") || !contentType) continue;
-    let file = await fishFiles.findOne({ filename });
-    if (!file) {
-      const bytes = Buffer.from(await Bun.file(new URL(filename, imageDirectory)).arrayBuffer());
-      const stream = bucket.openUploadStream(filename, { contentType });
-      await new Promise((resolve, reject) => stream.on("error", reject).on("finish", resolve).end(bytes));
-      file = await fishFiles.findOne({ filename });
-      console.log(`Uploaded ${filename}`);
-    }
-    await fish.updateOne(
-      { filename },
-      { $set: { imageFileId: file._id, imageContentType: contentType } },
-    );
   }
 }
 

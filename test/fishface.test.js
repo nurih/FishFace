@@ -1,9 +1,14 @@
 import { expect, test } from "bun:test";
 import { getAssignment, publicFish } from "../src/lib/fishface";
 
-test("uses the media endpoint for filename-backed fish images", () => {
+test("uses the filesystem media endpoint for filename-backed fish images", () => {
   expect(publicFish({ _id: "fish-id", species: "fish-001", filename: "fish-001.jpg" }).imageUrl)
-    .toBe("/api/media/fish/fish-id");
+    .toBe("/api/media/fish/fish-001.jpg");
+});
+
+test("replaces a legacy Mongo fish URL with the local fish stem", () => {
+  expect(publicFish({ id: "fish-id", species: "fish-009", imageUrl: "/api/media/fish/6a93b7858febb9b5a53e62de" }).imageUrl)
+    .toBe("/api/media/fish/fish-009");
 });
 
 test("reroll replaces the assigned fish with a different active fish", async () => {

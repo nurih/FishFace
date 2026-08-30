@@ -19,13 +19,13 @@ The system SHALL assign each player one random active fish for each global UTC f
 - **WHEN** the current UTC four-hour window changes
 - **THEN** the player can receive a new random fish assignment
 
-## Requirement: Webcam submission remains in place
+## Requirement: Webcam comparison remains in place
 
-The Play view SHALL submit a captured selfie through asynchronous fetch and SHALL not navigate away while scoring is in progress.
+The Play view SHALL automatically compare a captured selfie through asynchronous fetch without adding it to the leaderboard. The player MAY retake the selfie or switch specimens before explicitly entering the leaderboard.
 
 #### Scenario: Score request is pending
 
-- **WHEN** the player submits a selfie
+- **WHEN** the player captures a selfie
 - **THEN** the Play view shows a ranking state until it receives a response
 
 #### Scenario: Score request succeeds
@@ -33,9 +33,14 @@ The Play view SHALL submit a captured selfie through asynchronous fetch and SHAL
 - **WHEN** scoring completes
 - **THEN** the Play view renders the result without a page transition
 
+#### Scenario: Player enters the leaderboard
+
+- **WHEN** the player selects Enter leaderboard after a completed comparison
+- **THEN** the system persists that image and result, then returns to the player intake screen with a new anonymous player ID
+
 ## Requirement: Cropped countdown capture
 
-The Play view SHALL draw a centered square crop box over the live webcam view. It SHALL count down from three before capture and submit only the cropped image, resized to at most 240 by 240 pixels.
+The Play view SHALL draw a centered square crop box over the live webcam view. It SHALL count down from three before capture and compare only the cropped image, resized to at most 240 by 240 pixels.
 
 #### Scenario: Player captures a selfie
 
@@ -49,4 +54,4 @@ The Play view SHALL draw a centered square crop box over the live webcam view. I
 
 ## Requirement: Public player entries
 
-The system SHALL prompt for a full name and retain a browser-local anonymous player ID. Submitted selfies and names SHALL be eligible for public active-round display.
+The system SHALL prompt for a full name and retain a browser-local anonymous player ID. Only selfies explicitly entered into the leaderboard, with their names, SHALL be eligible for public active-round display.

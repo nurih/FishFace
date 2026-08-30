@@ -50,7 +50,9 @@
           "key": {
             "roundId": 1,
             "status": 1,
-            "assignedFishSimilarity": -1,
+            "targetWon": -1,
+            "assignedFishRank": 1,
+            "targetMargin": -1,
             "createdAt": 1
           }
         }

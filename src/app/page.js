@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 const playerKey = "fishface-player-id";
 const nameKey = "fishface-full-name";
-const formatScore = (score) => (score * 100).toFixed(2);
+const formatMargin = (margin) => `${margin >= 0 ? "+" : ""}${margin.toFixed(3)}`;
 
 function getPlayerId() {
   let id = localStorage.getItem(playerKey);
@@ -19,6 +19,7 @@ export default function Home() {
   const videoRef = useRef(null);
   const streamRef = useRef(null);
   const countdownTimerRef = useRef(null);
+  const activityCountRef = useRef(0);
   const [playerId, setPlayerId] = useState("");
   const [fullName, setFullName] = useState("");
   const [ready, setReady] = useState(false);
@@ -33,9 +34,22 @@ export default function Home() {
   const [error, setError] = useState("");
   const [currentEntry, setCurrentEntry] = useState(null);
   const [entries, setEntries] = useState([]);
+  const [selectedEntry, setSelectedEntry] = useState(null);
   const [countdown, setCountdown] = useState(0);
   const [systemsOpen, setSystemsOpen] = useState(false);
   const [purgeMode, setPurgeMode] = useState(false);
+  const [activity, setActivity] = useState("");
+
+  const runActivity = useCallback(async (label, operation) => {
+    activityCountRef.current += 1;
+    setActivity(label);
+    try {
+      return await operation();
+    } finally {
+      activityCountRef.current -= 1;
+      if (!activityCountRef.current) setActivity("");
+    }
+  }, []);
 
   const stopCamera = useCallback(() => {
     streamRef.current?.getTracks().forEach((track) => track.stop());
@@ -48,92 +62,130 @@ export default function Home() {
   }, []);
 
   const startCamera = useCallback(async (requestedDeviceId) => {
-    stopCamera();
-    setError("");
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: requestedDeviceId ? { deviceId: { exact: requestedDeviceId } } : true,
-        audio: false,
-      });
-      streamRef.current = stream;
-      videoRef.current.srcObject = stream;
-      const videoInputs = (await navigator.mediaDevices.enumerateDevices()).filter((item) => item.kind === "videoinput");
-      setDevices(videoInputs);
-      setDeviceId(requestedDeviceId || videoInputs[0]?.deviceId || "");
-    } catch {
-      setError("Camera access is required to make a FishFace.");
-    }
-  }, [stopCamera]);
+    return runActivity("LINKING OPTICS", async () => {
+      stopCamera();
+      setError("");
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: requestedDeviceId ? { deviceId: { exact: requestedDeviceId } } : true,
+          audio: false,
+        });
+        streamRef.current = stream;
+        videoRef.current.srcObject = stream;
+        const videoInputs = (await navigator.mediaDevices.enumerateDevices()).filter((item) => item.kind === "videoinput");
+        setDevices(videoInputs);
+        setDeviceId(requestedDeviceId || videoInputs[0]?.deviceId || "");
+      } catch {
+        setError("Camera access is required to make a FishFace.");
+      }
+    });
+  }, [runActivity, stopCamera]);
 
   const loadLeaderboard = useCallback(async () => {
     if (!playerId) return;
-    const response = await fetch(`/api/leaderboard?playerId=${encodeURIComponent(playerId)}`, { cache: "no-store" });
-    if (!response.ok) return;
-    const data = await response.json();
-    setCurrentEntry(data.currentEntry);
-    setEntries(data.entries);
-  }, [playerId]);
+    return runActivity("SYNCING REEF TELEMETRY", async () => {
+      const response = await fetch(`/api/leaderboard?playerId=${encodeURIComponent(playerId)}`, { cache: "no-store" });
+      if (!response.ok) return;
+      const data = await response.json();
+      setCurrentEntry(data.currentEntry);
+      setEntries(data.entries);
+    });
+  }, [playerId, runActivity]);
 
   const begin = async (event) => {
     event.preventDefault();
     const name = fullName.trim();
     if (!name) return;
-    setError("");
-    try {
-      const response = await fetch("/api/assignment", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ playerId, fullName: name }),
-      });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error);
-      localStorage.setItem(nameKey, name);
-      setFish(data.fish);
-      setReady(true);
-      await startCamera();
-    } catch (caught) {
-      setError(caught.message || "Unable to begin the round.");
-    }
+    return runActivity("ASSIGNING SPECIMEN", async () => {
+      setError("");
+      try {
+        const response = await fetch("/api/assignment", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ playerId, fullName: name }),
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error);
+        localStorage.setItem(nameKey, name);
+        setFish(data.fish);
+        setReady(true);
+        await startCamera();
+      } catch (caught) {
+        setError(caught.message || "Unable to begin the round.");
+      }
+    });
   };
 
   const rerollFish = async () => {
-    setError("");
-    try {
-      const response = await fetch("/api/assignment", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ playerId, fullName: fullName.trim(), reroll: true }),
-      });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error);
-      if (photoUrl) URL.revokeObjectURL(photoUrl);
-      setPhoto(null);
-      setPhotoUrl("");
-      setPhotoDimensions(null);
-      setResult(null);
-      setFish(data.fish);
-    } catch (caught) {
-      setError(caught.message || "Unable to choose another fish.");
-    }
+    return runActivity("SWITCHING SPECIMEN", async () => {
+      setError("");
+      try {
+        const response = await fetch("/api/assignment", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ playerId, fullName: fullName.trim(), reroll: true }),
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error);
+        if (photoUrl) URL.revokeObjectURL(photoUrl);
+        setPhoto(null);
+        setPhotoUrl("");
+        setPhotoDimensions(null);
+        setResult(null);
+        setFish(data.fish);
+      } catch (caught) {
+        setError(caught.message || "Unable to choose another fish.");
+      }
+    });
   };
 
-  const startNewRun = () => {
+  const endTurn = () => {
     window.clearInterval(countdownTimerRef.current);
     countdownTimerRef.current = null;
     stopCamera();
     if (photoUrl) URL.revokeObjectURL(photoUrl);
     localStorage.removeItem(nameKey);
+    const nextPlayerId = crypto.randomUUID();
+    localStorage.setItem(playerKey, nextPlayerId);
+    setPlayerId(nextPlayerId);
     setCountdown(0); setFish(null); setPhoto(null); setPhotoUrl(""); setPhotoDimensions(null);
-    setResult(null); setFullName(""); setReady(false); setError(""); setSystemsOpen(false);
+    setResult(null); setCurrentEntry(null); setFullName(""); setReady(false); setError(""); setSystemsOpen(false);
   };
 
   const deleteEntry = async (entry) => {
-    if (!window.confirm(`Delete ${entry.fullName}'s ${formatScore(entry.score)}% entry?`)) return;
+    if (!window.confirm(`Delete ${entry.fullName}'s target-match entry?`)) return;
+    return runActivity("PURGING RECORD", async () => {
+      setError("");
+      try {
+        const response = await fetch(`/api/leaderboard?id=${encodeURIComponent(entry.id)}`, { method: "DELETE" });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error);
+        await loadLeaderboard();
+      } catch (caught) { setError(caught.message || "Unable to delete this leaderboard entry."); }
+    });
+  };
+
+  const submit = async (image, publish = false) => {
+    if (!image) return false;
+    setRanking(true);
     setError("");
     try {
-      const response = await fetch(`/api/leaderboard?id=${encodeURIComponent(entry.id)}`, { method: "DELETE" });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error);
-      await loadLeaderboard();
-    } catch (caught) { setError(caught.message || "Unable to delete this leaderboard entry."); }
+      return await runActivity(publish ? "ENTERING LEADERBOARD" : "COMPARING SPECIMENS", async () => {
+        const form = new FormData();
+        form.append("playerId", playerId);
+        form.append("fullName", fullName.trim());
+        form.append("image", image, "fishface.jpg");
+        if (publish) form.append("publish", "true");
+        const response = await fetch("/api/submit", { method: "POST", body: form });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error);
+        console.debug("FishFace score", { capture: photoDimensions, fish: data.fish, scores: data, publish });
+        setResult(data);
+        if (publish) await loadLeaderboard();
+        return true;
+      });
+    } catch (caught) {
+      setError(caught.message || "Unable to rank this FishFace.");
+      return false;
+    } finally { setRanking(false); }
   };
 
   const snapPhoto = useCallback(() => {
@@ -149,13 +201,14 @@ export default function Home() {
     canvas.height = outputSize;
     canvas.getContext("2d").drawImage(video, cropX, cropY, cropSize, cropSize, 0, 0, outputSize, outputSize);
     setPhotoDimensions({ width: canvas.width, height: canvas.height });
-    canvas.toBlob((blob) => {
-      if (!blob) return;
+    runActivity("CAPTURING IMAGE", () => new Promise((resolve) => canvas.toBlob((blob) => {
+      if (!blob) return resolve();
       if (photoUrl) URL.revokeObjectURL(photoUrl);
       setPhoto(blob);
       setPhotoUrl(URL.createObjectURL(blob));
-    }, "image/jpeg", 0.9);
-  }, [photoUrl]);
+      submit(blob).finally(resolve);
+    }, "image/jpeg", 0.9)));
+  }, [photoUrl, runActivity, submit]);
 
   const capture = () => {
     if (countdownTimerRef.current || !videoRef.current?.videoWidth) return;
@@ -174,26 +227,8 @@ export default function Home() {
     }, 1000);
   };
 
-  const submit = async () => {
-    if (!photo) return;
-    setRanking(true);
-    setError("");
-    try {
-      const form = new FormData();
-      form.append("playerId", playerId);
-      form.append("fullName", fullName.trim());
-      form.append("image", photo, "fishface.jpg");
-      const response = await fetch("/api/submit", { method: "POST", body: form });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error);
-      console.debug("FishFace score", { capture: photoDimensions, fish: data.fish, scores: data });
-      setResult(data);
-      await loadLeaderboard();
-    } catch (caught) {
-      setError(caught.message || "Unable to rank this FishFace.");
-    } finally {
-      setRanking(false);
-    }
+  const enterLeaderboard = async () => {
+    if (await submit(photo, true)) endTurn();
   };
 
   useEffect(() => {
@@ -211,14 +246,14 @@ export default function Home() {
   return <main className="command-deck">
     <header className="masthead">
       <div><p className="eyebrow">AQUATIC ANALOGUE // FOUR-HOUR FISH-OFF</p><h1><span>FISH</span>FACE</h1><p className="mission">Make the face. Match the fish. Rule the reef.</p></div>
-      <div className="header-controls"><p className="system-status"><span aria-hidden="true" />OPTICAL LINK {ready ? "ACTIVE" : "STANDBY"}</p><button className="cog-button" type="button" onClick={() => setSystemsOpen((open) => !open)} aria-expanded={systemsOpen} aria-controls="systems-panel" aria-label="Open systems controls">⚙</button></div>
+      <div className="header-controls"><p className="system-status"><span aria-hidden="true" />OPTICAL LINK {ready ? "ACTIVE" : "STANDBY"}</p>{activity && <ProgressMeter label={activity} />}<button className="cog-button" type="button" onClick={() => setSystemsOpen((open) => !open)} aria-expanded={systemsOpen} aria-controls="systems-panel" aria-label="Open systems controls">⚙</button></div>
     </header>
     {systemsOpen && <section className="systems-panel" id="systems-panel">
       <p className="panel-code">AUXILIARY SYSTEMS</p>
       <label className="camera-picker">Optical source<select value={deviceId} onChange={(event) => startCamera(event.target.value)} disabled={!ready}>
         {devices.length ? devices.map((device, index) => <option key={device.deviceId} value={device.deviceId}>{device.label || `Camera ${index + 1}`}</option>) : <option>Start a run to connect a camera</option>}
       </select></label>
-      <button className="secondary" onClick={startNewRun} type="button">Start new run</button>
+      <button className="secondary" onClick={endTurn} type="button">End turn</button>
       <label className="purge-toggle"><input type="checkbox" checked={purgeMode} onChange={(event) => setPurgeMode(event.target.checked)} /> Enable leaderboard purge</label>
     </section>}
     <section className="game-grid">
@@ -239,20 +274,47 @@ export default function Home() {
           <div className="actions">
             <button className="secondary" onClick={rerollFish} disabled={ranking} type="button">Switch specimen</button>
             {!photo ? <button onClick={capture} disabled={countdown > 0} type="button">{countdown ? "Hold position…" : "Initiate capture"}</button> : <>
-              <button className="secondary" onClick={() => { URL.revokeObjectURL(photoUrl); setPhotoUrl(""); setPhoto(null); setPhotoDimensions(null); }} type="button">Retake scan</button>
-              <button onClick={submit} disabled={ranking} type="button">{ranking ? "Analyzing…" : "Run comparison"}</button>
+              <button className="secondary" onClick={() => { URL.revokeObjectURL(photoUrl); setPhotoUrl(""); setPhoto(null); setPhotoDimensions(null); setResult(null); }} disabled={ranking} type="button">Retake scan</button>
+              <button onClick={enterLeaderboard} disabled={ranking || !result} type="button">Enter leaderboard</button>
             </>}
           </div>
-          {result && <p className="result">Your {formatScore(result.assignedFishSimilarity)}% fish match is in the leaderboard.</p>}
+          {result && <section className="comparison-result" aria-live="polite">
+            <p className="result">{result.targetWon ? "TARGET IDENTIFIED // Your specimen was the closest match." : `TARGET MISSED // ${result.closestMatchFish.species} was closer.`}</p>
+            <p className="comparison-detail">Target rank #{result.assignedFishRank} · margin {formatMargin(result.targetMargin)}</p>
+            <ComparisonStrip selfieUrl={photoUrl} targetFish={result.fish} closestMatchFish={result.closestMatchFish} />
+          </section>}
         </>}
+        {!ready && selectedEntry && <LeaderboardDetail entry={selectedEntry} />}
         {error && <p className="error" role="alert">{error}</p>}
       </article>
       <aside className="card leaderboard">
         <p className="panel-code">02 // TELEMETRY</p><p className="eyebrow">CURRENT ROUND</p><h2>Your latest capture</h2>
-        {currentEntry ? <div className="current-entry"><div><img src={currentEntry.imageUrl} alt="Your latest FishFace" /><img src={currentEntry.fish.imageUrl} alt={currentEntry.fish.species} /></div><p>{formatScore(currentEntry.score)}% × {currentEntry.fish.species}</p></div> : <p>No scored capture yet.</p>}
+        {currentEntry ? <div className="current-entry"><ComparisonStrip selfieUrl={currentEntry.imageUrl} targetFish={currentEntry.fish} closestMatchFish={currentEntry.closestMatchFish} /><p>{currentEntry.targetWon ? "Target identified" : `Closest match: ${currentEntry.closestMatchFish.species}`} · target rank #{currentEntry.assignedFishRank} · margin {formatMargin(currentEntry.targetMargin)}</p></div> : <p>No scored capture yet.</p>}
         <p className="eyebrow">LIVE LEADERBOARD</p><h2>Current period</h2>
-        {entries.length ? <ol>{entries.map((entry) => <li key={entry.id}><span>{entry.fullName}</span><strong>{formatScore(entry.score)}%</strong>{purgeMode && <button className="purge-button" type="button" onClick={() => deleteEntry(entry)} aria-label={`Delete ${entry.fullName}'s leaderboard entry`}>PURGE</button>}</li>)}</ol> : <p>No faces in the water yet.</p>}
+        {entries.length ? <ol>{entries.map((entry) => <li key={entry.id}><button className="leaderboard-entry" type="button" onClick={() => setSelectedEntry(entry)} aria-pressed={selectedEntry?.id === entry.id}><span className="leaderboard-thumbnails"><img src={entry.fish.imageUrl} alt="" /><img src={entry.imageUrl} alt="" /><img src={entry.closestMatchFish.imageUrl} alt="" /></span><span>{entry.fullName}</span><strong>{entry.targetWon ? "TARGET" : `#${entry.assignedFishRank}`} · {formatMargin(entry.targetMargin)}</strong></button>{purgeMode && <button className="purge-button" type="button" onClick={() => deleteEntry(entry)} aria-label={`Delete ${entry.fullName}'s leaderboard entry`}>PURGE</button>}</li>)}</ol> : <p>No faces in the water yet.</p>}
       </aside>
     </section>
   </main>;
+}
+
+function ProgressMeter({ label }) {
+  return <div className="progress-meter" role="status" aria-live="polite"><span>FUEL // {label}</span><i aria-hidden="true" /></div>;
+}
+
+function ComparisonStrip({ selfieUrl, targetFish, closestMatchFish, large = false, targetFirst = false }) {
+  const selfie = <figure><img src={selfieUrl} alt="Your captured FishFace" /><figcaption>SELFIE</figcaption></figure>;
+  const target = <figure><img src={targetFish.imageUrl} alt={targetFish.species} /><figcaption>TARGET // {targetFish.species}</figcaption></figure>;
+  const bestMatch = <figure><img src={closestMatchFish.imageUrl} alt={closestMatchFish.species} /><figcaption>BEST MATCH // {closestMatchFish.species}</figcaption></figure>;
+  return <div className={`comparison-strip${large ? " comparison-strip-large" : ""}${targetFirst ? " comparison-strip-target-first" : ""}`}>
+    {targetFirst ? <>{target}{selfie}{bestMatch}</> : <>{selfie}{target}{bestMatch}</>}
+  </div>;
+}
+
+function LeaderboardDetail({ entry }) {
+  return <section className="leaderboard-detail" aria-live="polite">
+    <p className="panel-code">SELECTED LEADERBOARD RECORD</p>
+    <h2>{entry.fullName}</h2>
+    <p>{entry.targetWon ? "Target identified" : `Closest match: ${entry.closestMatchFish.species}`} · target rank #{entry.assignedFishRank} · margin {formatMargin(entry.targetMargin)}</p>
+    <ComparisonStrip selfieUrl={entry.imageUrl} targetFish={entry.fish} closestMatchFish={entry.closestMatchFish} large targetFirst />
+  </section>;
 }
