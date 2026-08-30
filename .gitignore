@@ -1,6 +1,6 @@
 # File created using '.gitignore Generator' for Visual Studio Code: https://bit.ly/vscode-gig
-# Created by https://www.toptal.com/developers/gitignore/api/nextjs,node,visualstudiocode
-# Edit at https://www.toptal.com/developers/gitignore?templates=nextjs,node,visualstudiocode
+# Created by https://www.toptal.com/developers/gitignore/api/visualstudiocode,node,nextjs
+# Edit at https://www.toptal.com/developers/gitignore?templates=visualstudiocode,node,nextjs
 
 ### NextJS ###
 # dependencies
@@ -192,9 +192,9 @@ dist
 .history
 .ionide
 
-# End of https://www.toptal.com/developers/gitignore/api/nextjs,node,visualstudiocode
+# End of https://www.toptal.com/developers/gitignore/api/visualstudiocode,node,nextjs
 
 # Custom rules (everything added below won't be overriden by 'Generate .gitignore File' if you use 'Update' option)
+
 /.tmp/
-data/fish/images/
 .vscode/settings.json
