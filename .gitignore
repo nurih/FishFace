@@ -198,3 +198,7 @@ dist
 
 /.tmp/
 .vscode/settings.json
+
+# The global Git ignore excludes directories named "lib". Application source belongs here.
+!/src/lib/
+!/src/lib/**
