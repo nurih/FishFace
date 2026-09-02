@@ -25,13 +25,27 @@ try {
 
 async function createFishDocuments(database) {
   const imageDirectory = new URL("../data/fish/images/", import.meta.url);
-  const fish = database.collection(schema.fish.name);
+  const fishCollection = database.collection(schema.fish.name);
   for (const filename of await readdir(imageDirectory)) {
+    console.log(`*** ${filename}`)
     const contentType = contentTypes[extname(filename).toLowerCase()];
-    if (!filename.startsWith("fish-") || !contentType || await fish.findOne({ filename })) continue;
+
+    if (!filename.startsWith("fish-")) {
+      console.log(`...Skipping ${filename}. Does not start with "fish-"`)
+      continue;
+    }
+    if (!contentType) {
+      console.log(`...Skipping ${filename}. Unsupported file type."`)
+      continue;
+    }
+    if (await fishCollection.findOne({ filename })) {
+      console.log(`...Skipping ${filename}. Already there."`)
+      continue;
+    }
+
     const bytes = Buffer.from(await Bun.file(new URL(filename, imageDirectory)).arrayBuffer());
     const embedding = await createImageEmbedding({ bytes, contentType });
-    await fish.insertOne({
+    await fishCollection.insertOne({
       filename,
       species: basename(filename, extname(filename)),
       active: true,
@@ -45,6 +59,7 @@ async function createFishDocuments(database) {
 async function prepareCollections(database) {
   for (const { name, indexes = [], searchIndexes = [] } of Object.values(schema)) {
     const collection = database.collection(name);
+    await collection.drop();
     for (const { key, options } of indexes) await collection.createIndex(key, options);
     for (const index of searchIndexes) await collection.createSearchIndex(index);
     console.log(`Seeded indexes for ${name}.`);
