@@ -48,12 +48,15 @@
     "indexes": [
         {
           "key": {
-            "roundId": 1,
             "status": 1,
-            "targetWon": -1,
-            "assignedFishRank": 1,
-            "targetMargin": -1,
-            "createdAt": 1
+            "createdAt": -1
+          }
+        },
+        {
+          "key": {
+            "playerId": 1,
+            "status": 1,
+            "createdAt": -1
           }
         }
       ]

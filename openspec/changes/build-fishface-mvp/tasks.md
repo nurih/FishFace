@@ -18,7 +18,7 @@
 - [x] Call Atlas multimodal embeddings for submitted images.
 - [x] Run exact Vector Search and store all three score measures.
 - [x] Store selfies in GridFS and expose public display URLs.
-- [x] Render the current player's latest capture and a scrollable top-50 active-round leaderboard.
+- [x] Render the current player's latest capture and a scrollable leaderboard of the latest 24 scored submissions.
 
 ## 4. Validation
 

@@ -1,5 +1,8 @@
 import { publicFish } from "./fishface";
 
+export const leaderboardLimit = 24;
+export const latestSubmissionSort = { createdAt: -1 };
+
 export function toLeaderboardEntry(entry) {
   return {
     id: String(entry._id), fullName: entry.fullName, fish: publicFish(entry.fish),

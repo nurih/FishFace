@@ -25,7 +25,7 @@ test("makes a target win when it is the closest fish", () => {
   expect(scores.closestMatchFish._id).toBe("assigned");
 });
 
-test("defines leaderboard ordering by win, rank, and margin", () => {
+test("ranks eligible leaderboard entries by result, rank, and margin", () => {
   expect(leaderboardSort).toEqual({ targetWon: -1, assignedFishRank: 1, targetMargin: -1, createdAt: 1 });
 });
 

@@ -37,7 +37,6 @@ export default function Home() {
   const [selectedEntry, setSelectedEntry] = useState(null);
   const [countdown, setCountdown] = useState(0);
   const [systemsOpen, setSystemsOpen] = useState(false);
-  const [purgeMode, setPurgeMode] = useState(false);
   const [activity, setActivity] = useState("");
 
   const runActivity = useCallback(async (label, operation) => {
@@ -150,19 +149,6 @@ export default function Home() {
     setResult(null); setCurrentEntry(null); setFullName(""); setReady(false); setError(""); setSystemsOpen(false);
   };
 
-  const deleteEntry = async (entry) => {
-    if (!window.confirm(`Delete ${entry.fullName}'s target-match entry?`)) return;
-    return runActivity("PURGING RECORD", async () => {
-      setError("");
-      try {
-        const response = await fetch(`/api/leaderboard?id=${encodeURIComponent(entry.id)}`, { method: "DELETE" });
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.error);
-        await loadLeaderboard();
-      } catch (caught) { setError(caught.message || "Unable to delete this leaderboard entry."); }
-    });
-  };
-
   const submit = async (image, publish = false) => {
     if (!image) return false;
     setRanking(true);
@@ -245,7 +231,7 @@ export default function Home() {
 
   return <main className="command-deck">
     <header className="masthead">
-      <div><p className="eyebrow">AQUATIC ANALOGUE // FOUR-HOUR FISH-OFF</p><h1><span>FISH</span>FACE</h1><p className="mission">Make the face. Match the fish. Rule the reef.</p></div>
+      <div><p className="eyebrow">AQUATIC ANALOGUE // THE ULTIMATE FISH-OFF</p><h1><span>FISH</span>FACE</h1><p className="mission">Make the face. Match the fish. Rule the reef.</p></div>
       <div className="header-controls"><p className="system-status"><span aria-hidden="true" />OPTICAL LINK {ready ? "ACTIVE" : "STANDBY"}</p>{activity && <ProgressMeter label={activity} />}<button className="cog-button" type="button" onClick={() => setSystemsOpen((open) => !open)} aria-expanded={systemsOpen} aria-controls="systems-panel" aria-label="Open systems controls">⚙</button></div>
     </header>
     {systemsOpen && <section className="systems-panel" id="systems-panel">
@@ -253,14 +239,12 @@ export default function Home() {
       <label className="camera-picker">Optical source<select value={deviceId} onChange={(event) => startCamera(event.target.value)} disabled={!ready}>
         {devices.length ? devices.map((device, index) => <option key={device.deviceId} value={device.deviceId}>{device.label || `Camera ${index + 1}`}</option>) : <option>Start a run to connect a camera</option>}
       </select></label>
-      <button className="secondary" onClick={endTurn} type="button">End turn</button>
-      <label className="purge-toggle"><input type="checkbox" checked={purgeMode} onChange={(event) => setPurgeMode(event.target.checked)} /> Enable leaderboard purge</label>
     </section>}
     <section className="game-grid">
       <article className="card play-card">
         {!ready ? <form onSubmit={begin} className="start-form">
           <p className="panel-code">01 // INTAKE</p><h2>Identify yourself, cadet.</h2>
-          <label>Full name<input value={fullName} onChange={(event) => setFullName(event.target.value)} placeholder="ENTER DESIGNATION" required /></label>
+          <label>Your Legendary FishFace Name<input value={fullName} onChange={(event) => setFullName(event.target.value)} placeholder="ENTER DESIGNATION" required /></label>
           <button>Assign specimen</button>
         </form> : <>
           <div className="camera">
@@ -277,6 +261,7 @@ export default function Home() {
               <button className="secondary" onClick={() => { URL.revokeObjectURL(photoUrl); setPhotoUrl(""); setPhoto(null); setPhotoDimensions(null); setResult(null); }} disabled={ranking} type="button">Retake scan</button>
               <button onClick={enterLeaderboard} disabled={ranking || !result} type="button">Enter leaderboard</button>
             </>}
+            <button className="secondary leave-turn" onClick={endTurn} type="button" aria-label="Leave turn for a new player" title="Leave turn for a new player">Throw Me Back</button>
           </div>
           {result && <section className="comparison-result" aria-live="polite">
             <p className="result">{result.targetWon ? "TARGET IDENTIFIED // Your specimen was the closest match." : `TARGET MISSED // ${result.closestMatchFish.species} was closer.`}</p>
@@ -288,10 +273,10 @@ export default function Home() {
         {error && <p className="error" role="alert">{error}</p>}
       </article>
       <aside className="card leaderboard">
-        <p className="panel-code">02 // TELEMETRY</p><p className="eyebrow">CURRENT ROUND</p><h2>Your latest capture</h2>
+        <p className="panel-code">02 // TELEMETRY</p><p className="eyebrow">PERSONAL BESTIARY</p><h2>Your latest capture</h2>
         {currentEntry ? <div className="current-entry"><ComparisonStrip selfieUrl={currentEntry.imageUrl} targetFish={currentEntry.fish} closestMatchFish={currentEntry.closestMatchFish} /><p>{currentEntry.targetWon ? "Target identified" : `Closest match: ${currentEntry.closestMatchFish.species}`} · target rank #{currentEntry.assignedFishRank} · margin {formatMargin(currentEntry.targetMargin)}</p></div> : <p>No scored capture yet.</p>}
-        <p className="eyebrow">LIVE LEADERBOARD</p><h2>Current period</h2>
-        {entries.length ? <ol>{entries.map((entry) => <li key={entry.id}><button className="leaderboard-entry" type="button" onClick={() => setSelectedEntry(entry)} aria-pressed={selectedEntry?.id === entry.id}><span className="leaderboard-thumbnails"><img src={entry.fish.imageUrl} alt="" /><img src={entry.imageUrl} alt="" /><img src={entry.closestMatchFish.imageUrl} alt="" /></span><span>{entry.fullName}</span><strong>{entry.targetWon ? "TARGET" : `#${entry.assignedFishRank}`} · {formatMargin(entry.targetMargin)}</strong></button>{purgeMode && <button className="purge-button" type="button" onClick={() => deleteEntry(entry)} aria-label={`Delete ${entry.fullName}'s leaderboard entry`}>PURGE</button>}</li>)}</ol> : <p>No faces in the water yet.</p>}
+        <p className="eyebrow">LIVE LEADERBOARD</p><h2>Latest 24</h2>
+        {entries.length ? <ol>{entries.map((entry) => <li key={entry.id}><button className="leaderboard-entry" type="button" onClick={() => setSelectedEntry(entry)} aria-pressed={selectedEntry?.id === entry.id}><span className="leaderboard-thumbnails"><img src={entry.fish.imageUrl} alt="" /><img src={entry.imageUrl} alt="" /><img src={entry.closestMatchFish.imageUrl} alt="" /></span><span>{entry.fullName}</span><strong>{entry.targetWon ? "TARGET" : `#${entry.assignedFishRank}`} · {formatMargin(entry.targetMargin)}</strong></button></li>)}</ol> : <p>No faces in the water yet.</p>}
       </aside>
     </section>
     <footer className="repo-link">

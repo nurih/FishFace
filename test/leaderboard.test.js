@@ -1,5 +1,10 @@
 import { expect, test } from "bun:test";
-import { toLeaderboardEntry } from "../src/lib/leaderboard";
+import { leaderboardLimit, latestSubmissionSort, toLeaderboardEntry } from "../src/lib/leaderboard";
+
+test("requests the latest 24 leaderboard entries", () => {
+  expect(leaderboardLimit).toBe(24);
+  expect(latestSubmissionSort).toEqual({ createdAt: -1 });
+});
 
 test("returns the target-relative leaderboard payload", () => {
   const entry = toLeaderboardEntry({

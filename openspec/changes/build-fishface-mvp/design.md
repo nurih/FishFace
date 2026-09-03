@@ -14,7 +14,7 @@ The server stores the selfie in the `selfies` GridFS bucket, sends it to Atlas's
 - `closestCatalogSimilarity`: score of the highest matching catalog fish.
 - `assignedFishRank`: one-based rank of the assigned fish across the full active catalog.
 
-The active leaderboard uses only `assignedFishSimilarity`. It returns the top 50 scored submissions for the current round, sorted descending by score. The current-round panel separately shows the current player's latest scored capture.
+The leaderboard selects the latest 24 scored submissions across all rounds, then ranks them by target result, target rank, and target margin. A separate panel shows the current player's latest scored capture across all rounds.
 
 ## Collections
 
