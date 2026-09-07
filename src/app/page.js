@@ -39,6 +39,15 @@ export default function Home() {
   const [systemsOpen, setSystemsOpen] = useState(false);
   const [activity, setActivity] = useState("");
 
+  useEffect(() => {
+    fetch("/api/public-ip", { cache: "no-store" })
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.ip) console.log("API public IP:", data.ip);
+      })
+      .catch((error) => console.error("Could not determine API public IP:", error));
+  }, []);
+
   const runActivity = useCallback(async (label, operation) => {
     activityCountRef.current += 1;
     setActivity(label);
