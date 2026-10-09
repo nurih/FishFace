@@ -1,0 +1,188 @@
+"use client";
+
+import { useCallback, useEffect, useRef, useState } from "react";
+import BoothResult from "./BoothResult";
+
+export default function PhotoBooth() {
+  const videoRef = useRef(null);
+  const streamRef = useRef(null);
+  const countdownRef = useRef(null);
+  const [stage, setStage] = useState("start");
+  const [fullName, setFullName] = useState("");
+  const [playerId, setPlayerId] = useState("");
+  const [fish, setFish] = useState(null);
+  const [result, setResult] = useState(null);
+  const [countdown, setCountdown] = useState(0);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+
+  const stopCamera = useCallback(() => {
+    streamRef.current?.getTracks().forEach((track) => track.stop());
+    streamRef.current = null;
+  }, []);
+
+  useEffect(() => {
+    if (stage !== "play") return;
+    if (!navigator.mediaDevices?.getUserMedia) {
+      setError("Camera access is required to take a selfie.");
+      return;
+    }
+    let cancelled = false;
+    navigator.mediaDevices.getUserMedia({ video: true, audio: false })
+      .then((stream) => {
+        if (cancelled) return stream.getTracks().forEach((track) => track.stop());
+        streamRef.current = stream;
+        if (videoRef.current) videoRef.current.srcObject = stream;
+      })
+      .catch(() => setError("Camera access is required to take a selfie."));
+    return () => { cancelled = true; stopCamera(); };
+  }, [stage, stopCamera]);
+
+  useEffect(() => () => {
+    window.clearInterval(countdownRef.current);
+    stopCamera();
+  }, [stopCamera]);
+
+  const assignment = async (id, name, reroll = false) => {
+    const response = await fetch("/api/assignment", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ playerId: id, fullName: name, reroll }),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Unable to assign a fish.");
+    return data.fish;
+  };
+
+  const startTurn = async (event) => {
+    event.preventDefault();
+    const name = fullName.trim();
+    if (!name) return setError("Enter your name.");
+    setBusy(true);
+    setError("");
+    try {
+      const id = crypto.randomUUID();
+      const target = await assignment(id, name);
+      setFullName(name);
+      setPlayerId(id);
+      setFish(target);
+      setResult(null);
+      setStage("play");
+    } catch (caught) {
+      setError(caught.message);
+    } finally { setBusy(false); }
+  };
+
+  const switchFish = async () => {
+    setBusy(true);
+    setError("");
+    try { setFish(await assignment(playerId, fullName, true)); }
+    catch (caught) { setError(caught.message); }
+    finally { setBusy(false); }
+  };
+
+  const scorePhoto = async () => {
+    const video = videoRef.current;
+    if (!video?.videoWidth || !video.clientWidth || !video.clientHeight) return;
+    const displayScale = Math.max(video.clientWidth / video.videoWidth, video.clientHeight / video.videoHeight);
+    const cropSize = Math.min(video.clientWidth * 0.6 / displayScale, video.videoWidth, video.videoHeight);
+    const canvas = document.createElement("canvas");
+    canvas.width = canvas.height = Math.min(240, Math.round(cropSize));
+    canvas.getContext("2d").drawImage(video, (video.videoWidth - cropSize) / 2, (video.videoHeight - cropSize) / 2,
+      cropSize, cropSize, 0, 0, canvas.width, canvas.height);
+    const image = await new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.9));
+    if (!image) return setError("Unable to capture a selfie.");
+
+    setBusy(true);
+    setError("");
+    try {
+      const form = new FormData();
+      form.append("playerId", playerId);
+      form.append("fullName", fullName);
+      form.append("image", image, "fishface.jpg");
+      form.append("booth", "true");
+      const response = await fetch("/api/submit", { method: "POST", body: form });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Unable to score this selfie.");
+      setResult({ ...data, fullName });
+      setStage("result");
+    } catch (caught) {
+      setError(caught.message);
+    } finally { setBusy(false); }
+  };
+
+  const capture = () => {
+    if (busy || countdownRef.current || !videoRef.current?.videoWidth) return;
+    let remaining = 3;
+    setCountdown(remaining);
+    countdownRef.current = window.setInterval(() => {
+      remaining -= 1;
+      setCountdown(remaining);
+      if (remaining) return;
+      window.clearInterval(countdownRef.current);
+      countdownRef.current = null;
+      scorePhoto();
+    }, 1000);
+  };
+
+  const endTurn = () => {
+    window.clearInterval(countdownRef.current);
+    countdownRef.current = null;
+    stopCamera();
+    setCountdown(0);
+    setPlayerId("");
+    setFullName("");
+    setFish(null);
+    setResult(null);
+    setError("");
+    setStage("start");
+  };
+
+  const finishTurn = async () => {
+    setBusy(true);
+    setError("");
+    try {
+      const response = await fetch(`/api/booth/${result.id}/publish`, { method: "POST" });
+      if (!response.ok) throw new Error("Unable to finish this turn.");
+      endTurn();
+    } catch (caught) {
+      setError(caught.message);
+    } finally { setBusy(false); }
+  };
+
+  return <main className="booth">
+    <header className="masthead"><div><p className="eyebrow">FISHFACE PHOTO BOOTH</p><h1><span>FISH</span>FACE</h1><p className="mission">Meet your fish face. Take home the match.</p></div></header>
+    {stage === "start" && <section className="card booth-intro">
+      <p className="panel-code">01 // START</p><h2>Find your fish face.</h2>
+      <p>Get a fish, take a selfie, and see which fish looks most like you.</p>
+      <form className="start-form" onSubmit={startTurn}>
+        <label>Your name<input value={fullName} onChange={(event) => setFullName(event.target.value)} required /></label>
+        <button type="submit" disabled={busy}>Let's go!</button>
+      </form>
+    </section>}
+    {stage === "play" && <section className="card booth-play">
+      <p className="panel-code">02 // CAMERA</p><h2>Make the face.</h2>
+      <div className="camera">
+        <p className="camera-readout">LIVE // FACE SCANNER</p>
+        <video ref={videoRef} autoPlay playsInline muted />
+        <div className="crop-box">{countdown > 0 && <span>{countdown}</span>}</div>
+      </div>
+      <div className="booth-target-row">
+        <div className="booth-target">
+          <img src={fish.imageUrl} alt={fish.species} />
+          <div className="booth-target-label"><strong>Your target</strong><span>{fish.species}</span></div>
+          <button className="booth-switch" type="button" onClick={switchFish} disabled={busy || countdown > 0} aria-label="Switch fish" title="Switch fish">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 1 1-2.4-5.7" /><path d="M20 4v6h-6" /></svg>
+          </button>
+        </div>
+        <aside className="booth-instruction">Make your best Fish Face, and take a selfie!</aside>
+      </div>
+      <div className="actions booth-actions">
+        <button type="button" onClick={capture} disabled={busy || countdown > 0}>{busy ? "Evaluating…" : countdown ? "Hold still…" : "Take selfie"}</button>
+        <button className="secondary leave-turn" type="button" onClick={endTurn} disabled={busy}>End turn</button>
+      </div>
+    </section>}
+    {stage === "result" && result && <BoothResult result={result} onEnd={finishTurn} ending={busy} />}
+    {error && <p className="error" role="alert">{error}</p>}
+  </main>;
+}

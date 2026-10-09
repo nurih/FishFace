@@ -21,12 +21,12 @@ test("returns the target-relative leaderboard payload", () => {
   });
 });
 
-test("normalizes legacy stored fish URLs to filesystem image URLs", () => {
+test("normalizes legacy stored fish URLs to static fish assets", () => {
   const entry = toLeaderboardEntry({
     _id: "submission", selfieFileId: "selfie",
     fish: { id: "target", species: "fish-009", imageUrl: "/api/media/fish/old-target" },
     closestMatchFish: { id: "best", species: "fish-010", imageUrl: "/api/media/fish/old-best" },
   });
-  expect(entry.fish.imageUrl).toBe("/api/media/fish/fish-009");
-  expect(entry.closestMatchFish.imageUrl).toBe("/api/media/fish/fish-010");
+  expect(entry.fish.imageUrl).toBe("/fish/fish-009.jpg");
+  expect(entry.closestMatchFish.imageUrl).toBe("/fish/fish-010.jpg");
 });

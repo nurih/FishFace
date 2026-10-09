@@ -33,9 +33,13 @@ sequenceDiagram
 
 Rounds last four hours. A player keeps one assigned fish per round unless they choose a reroll. A score wins when the assigned fish is the highest-ranked catalog match for the selfie; the leaderboard orders scored submissions by win, target rank, target margin, and time.
 
+## Photo Booth
+
+Open `/booth` directly for a separate flow. Enter a name, start a turn, switch fish if desired, and take a selfie. The booth scores and saves the result immediately, then shows a named photostrip with the target fish, selfie, best match, QR permalink, and print action. End Turn adds the result to the shared leaderboard and returns to the booth start screen. The booth does not display a leaderboard. Saved results remain public at `/booth/result/<id>`.
+
 ## Local development
 
-Prerequisites: Bun, Python (only for `collect:fish`), and a MongoDB Atlas deployment with Atlas Vector Search and Atlas AI access.
+Prerequisites: Bun, Python (only for `prep:images`), and a MongoDB Atlas deployment with Atlas Vector Search and Atlas AI access.
 
 ```powershell
 Copy-Item .env.example .env.local
@@ -53,6 +57,8 @@ MONGODB_ATLAS_AI_API_KEY=...
 
 `MONGODB_ATLAS_AI_API_KEY` is a MongoDB Atlas model API key used only by the server-side embedding request. Do not expose it to the browser.
 
+After adding catalog images, run `bun run sync:fish-assets` to copy them into `public/fish` for the web app.
+
 Run the test suite and production build with:
 
 ```powershell
@@ -66,14 +72,14 @@ To run the built app locally:
 bun run start
 ```
 
-## Deploy
+## Deploy to a Node.js host
 
 Deploy to a host that supports a Node.js Next.js server. Configure the same three environment variables as production secrets; `MONGO_URL` must be able to reach the Atlas deployment from the host. Use `bun run build` as the build command and `bun run start` as the start command. The app is not a static export: its API routes require a running server.
 
-Before the first deployment, load the catalog and create its indexes from a machine with the production environment variables:
+Before the first deployment, load the catalog and create its indexes from a machine with the production environment variables. This command drops and recreates the collections, so use it only for an empty database:
 
 ```powershell
-bun run seed
+bun run prep:db
 ```
 
 Run this only after adding catalog images to `data/fish/images`. It creates ordinary indexes and the `fish_embedding` Atlas Vector Search index, then inserts embeddings for previously unseeded `fish-*` images. Ensure the Atlas Search index is ready before accepting submissions.
@@ -100,4 +106,4 @@ Collect candidate images with:
 bun run collect:fish
 ```
 
-This downloads the curated URLs in `scripts/getFish.py` to `.tmp/fish-images`. Review image source licenses before selecting files for `data/fish/images`, preprocessing them, or publishing them. Then run `bun run seed` to embed and insert the selected `fish-*` images.
+This downloads the curated URLs in `scripts/getFish.py` to `.tmp/fish-images`. Review image source licenses before selecting files for `data/fish/images`, preprocessing them, or publishing them. Then run `bun run prep:db` to embed and insert the selected `fish-*` images.

@@ -26,10 +26,10 @@ export async function getAssignment(database, { playerId, fullName, reroll = fal
 }
 
 export function publicFish(fish) {
-  const localImageName = fish.filename || (fish.species?.startsWith("fish-") ? fish.species : null);
+  const localImageName = fish.filename || (fish.species?.startsWith("fish-") ? `${fish.species}.jpg` : null);
   return {
     id: String(fish._id ?? fish.id),
     species: fish.species,
-    imageUrl: localImageName ? `/api/media/fish/${encodeURIComponent(localImageName)}` : fish.imageUrl || null,
+    imageUrl: localImageName ? `/fish/${encodeURIComponent(localImageName)}` : fish.imageUrl || null,
   };
 }

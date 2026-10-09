@@ -114,6 +114,7 @@ web_modules/
 .env.test.local
 .env.production.local
 .env.local
+.dev.vars
 
 # parcel-bundler cache (https://parceljs.org/)
 .cache
@@ -202,3 +203,5 @@ dist
 # The global Git ignore excludes directories named "lib". Application source belongs here.
 !/src/lib/
 !/src/lib/**
+
+/.bun-cache/

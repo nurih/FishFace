@@ -1,16 +1,18 @@
 import { GridFSBucket, MongoClient, ObjectId } from "mongodb";
 import schema from "./schema";
 
-let clientPromise;
-
-export async function db() {
+export async function withDatabase(work) {
   if (!process.env.MONGO_URL) throw new Error("MONGO_URL is not configured.");
-  if (!clientPromise) clientPromise = new MongoClient(process.env.MONGO_URL).connect();
-  return (await clientPromise).db(process.env.MONGODB_DB || "fishface");
+  const client = new MongoClient(process.env.MONGO_URL);
+  try {
+    await client.connect();
+    return await work(client.db(process.env.MONGODB_DB || "fishface"));
+  } finally {
+    await client.close();
+  }
 }
 
-export async function uploadSelfie(bytes, contentType) {
-  const database = await db();
+export async function uploadSelfie(database, bytes, contentType) {
   const bucket = new GridFSBucket(database, { bucketName: schema.selfiesFiles.name.replace(".files", "") });
   const stream = bucket.openUploadStream(`selfie-${crypto.randomUUID()}.jpg`, {
     contentType,
@@ -21,8 +23,7 @@ export async function uploadSelfie(bytes, contentType) {
   return stream.id;
 }
 
-export async function readSelfie(id) {
-  const database = await db();
+export async function readSelfie(database, id) {
   const bucket = new GridFSBucket(database, { bucketName: schema.selfiesFiles.name.replace(".files", "") });
   const files = await database.collection(schema.selfiesFiles.name).find({ _id: new ObjectId(id) }).toArray();
   if (!files[0]) return null;
