@@ -5,6 +5,20 @@
   box-sizing: border-box;
 }
 body { margin: 0; min-height: 100vh; background: linear-gradient(90deg, #050a1b 0 4%, transparent 4% 96%, #050a1b 96%), repeating-linear-gradient(0deg, #090f24 0 1px, #050a1b 1px 5px); }
+body > main { position: relative; z-index: 1; }
+.ambient-fish { inset: 0; overflow: hidden; pointer-events: none; position: fixed; z-index: 0; }
+.ambient-fish span { animation: fish-radiate var(--duration) linear var(--delay) infinite; height: calc(var(--size) * 2.2); left: var(--x); opacity: 0; position: absolute; top: var(--y); width: var(--size); }
+.ambient-fish i { animation: fish-wiggle 1.6s ease-in-out infinite alternate; background: #00e5ff; display: block; height: 100%; -webkit-mask: url("/just-leaf.svg") center / contain no-repeat; mask: url("/just-leaf.svg") center / contain no-repeat; width: 100%; }
+.ambient-fish span:nth-child(3n) i { background: #9aff00; }
+.ambient-fish span:nth-child(5n) i { background: #ffb300; }
+.ambient-bubbles { inset: 0; overflow: hidden; pointer-events: none; position: fixed; z-index: 0; }
+.ambient-bubbles span { animation: bubble-rise var(--duration) linear var(--delay) infinite; background: rgba(185, 233, 245, .08); border: 1px solid #b9e9f5; border-radius: 50%; height: var(--size); left: var(--x); opacity: 0; position: absolute; top: var(--y); width: var(--size); }
+.ambient-bubbles span:nth-child(3n) { border-color: #f7fbff; }
+.ambient-bubbles span:nth-child(5n) { background: rgba(215, 245, 237, .1); border-color: #d7f5ed; }
+@keyframes fish-radiate { 0%, 100% { opacity: 0; transform: translate3d(0, 0, 0); } 20% { opacity: .138; } 80% { opacity: .1035; } 99% { transform: translate3d(var(--dx), var(--dy), 0); } }
+@keyframes fish-wiggle { from { transform: rotate(calc(var(--heading) - 12deg)) translateY(-2px); } to { transform: rotate(calc(var(--heading) + 12deg)) translateY(2px); } }
+@keyframes bubble-rise { 0% { opacity: 0; transform: translate3d(0, 10px, 0) scale(.75); } 15%, 80% { opacity: var(--alpha); } 100% { opacity: 0; transform: translate3d(var(--drift), var(--rise), 0) scale(1.1); } }
+@media (prefers-reduced-motion: reduce), print { .ambient-fish, .ambient-bubbles { display: none; } }
 button,
 input,
 select {
