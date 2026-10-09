@@ -25,4 +25,4 @@
 - [x] Test round boundaries and score selection.
 - [ ] Test assignment reuse and leaderboard ordering against MongoDB.
 - [ ] Test API input and service-failure responses.
-- [ ] Run Bun tests and production build.
+- [x] Run Bun tests and production build.
