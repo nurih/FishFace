@@ -1,19 +1,5 @@
 import "./globals.css";
-
-const ambientFish = [
-  [49, 48, -46, -35, -90, 29, -3, 18],
-  [52, 44, 42, -30, 90, 34, -21, 22],
-  [46, 53, -39, 25, -90, 31, -15, 15],
-  [54, 51, 45, 36, 90, 38, -7, 19],
-  [51, 47, 10, -48, 90, 33, -26, 14],
-  [48, 55, -18, 43, -90, 36, -12, 21],
-  [53, 49, 48, -10, 90, 27, -19, 16],
-  [47, 45, -51, 8, -90, 40, -31, 20],
-  [50, 52, 29, 40, 90, 32, -4, 17],
-  [45, 50, -32, -43, -90, 37, -23, 23],
-  [55, 54, 37, 20, 90, 30, -17, 15],
-  [48, 46, -7, -46, -90, 35, -9, 18],
-];
+import AmbientFish from "./AmbientFish";
 
 const bubbleSeeds = [
   [5, 92, 3, 48, 8, 22, -4, .2],
@@ -58,13 +44,7 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return <html lang="en"><body>
-    <div className="ambient-fish" aria-hidden="true">
-      {ambientFish.map(([x, y, dx, dy, heading, duration, delay, size], index) =>
-        <span key={index} style={{
-          "--x": `${x}%`, "--y": `${y}%`, "--dx": `${dx}vw`, "--dy": `${dy}vh`,
-          "--heading": `${heading}deg`, "--duration": `${(duration / 1.2).toFixed(2)}s`, "--delay": `${delay}s`, "--size": `${size}px`,
-        }}><i /></span>)}
-    </div>
+    <AmbientFish />
     <div className="ambient-bubbles" aria-hidden="true">
       {ambientBubbles.map(([x, y, drift, rise, size, duration, delay, alpha], index) =>
         <span key={index} style={{
