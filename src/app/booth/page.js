@@ -161,25 +161,29 @@ export default function PhotoBooth() {
       </form>
     </section>}
     {stage === "play" && <section className="card booth-play">
-      <p className="panel-code">02 // CAMERA</p><h2>Make the face.</h2>
-      <div className="camera">
-        <p className="camera-readout">LIVE // FACE SCANNER</p>
-        <video ref={videoRef} autoPlay playsInline muted />
-        <div className="crop-box">{countdown > 0 && <span>{countdown}</span>}</div>
+      <p className="panel-code">02 // CAMERA</p>
+      <div className="booth-heading">
+        <h2>Make your best Fish Face, and take a selfie!</h2>
+        <button className="booth-switch" type="button" onClick={switchFish} disabled={busy || countdown > 0} aria-label="Switch fish" title="Switch fish">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 1 1-2.4-5.7" /><path d="M20 4v6h-6" /></svg>
+        </button>
       </div>
-      <div className="booth-target-row">
-        <div className="booth-target">
-          <img src={fish.imageUrl} alt={fish.species} />
-          <div className="booth-target-label"><strong>Your target</strong><span>{fish.species}</span></div>
-          <button className="booth-switch" type="button" onClick={switchFish} disabled={busy || countdown > 0} aria-label="Switch fish" title="Switch fish">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 1 1-2.4-5.7" /><path d="M20 4v6h-6" /></svg>
-          </button>
+      <div className="booth-stage">
+        <div className="camera">
+          <p className="camera-readout">LIVE // FACE SCANNER</p>
+          <video ref={videoRef} autoPlay playsInline muted />
+          <div className="crop-box">{countdown > 0 && <span>{countdown}</span>}</div>
         </div>
-        <aside className="booth-instruction">Make your best Fish Face, and take a selfie!</aside>
-      </div>
-      <div className="actions booth-actions">
-        <button type="button" onClick={capture} disabled={busy || countdown > 0}>{busy ? "Evaluating…" : countdown ? "Hold still…" : "Take selfie"}</button>
-        <button className="secondary leave-turn" type="button" onClick={endTurn} disabled={busy}>End turn</button>
+        <div className="booth-controls">
+          <div className="booth-target">
+            <img src={fish.imageUrl} alt={fish.species} />
+            <div className="booth-target-label"><strong>Your Target</strong><span>{fish.species}</span></div>
+          </div>
+          <button className="booth-capture" type="button" onClick={capture} disabled={busy || countdown > 0} aria-label={busy ? "Evaluating selfie" : countdown ? "Hold still" : "Take selfie"} title="Take selfie">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M4 7h3l2-2h6l2 2h3v12H4z" /><circle cx="12" cy="13" r="3.5" /></svg>
+          </button>
+          <button className="secondary leave-turn" type="button" onClick={endTurn} disabled={busy}>End turn</button>
+        </div>
       </div>
     </section>}
     {stage === "result" && result && <BoothResult result={result} onEnd={finishTurn} ending={busy} />}
