@@ -241,6 +241,29 @@ input:focus, select:focus { border-color: #00e5ff; outline: 2px solid #00e5ff55;
 .booth-intro .start-form { align-items: end; grid-template-columns: minmax(0, 1fr) auto; max-width: none; }
 .booth-intro .start-form input { width: 100%; }
 .booth-intro .start-form button { white-space: nowrap; }
+.booth-carousel { background: #0b1430; border: 2px solid #315376; box-shadow: 7px 7px 0 #020612; margin-bottom: 1.5rem; padding: 1.5rem; width: 100%; }
+.booth-carousel-heading { align-items: center; display: flex; }
+.booth-carousel-heading h2 { margin-bottom: 1rem; overflow-wrap: anywhere; }
+.booth-carousel-cue { height: 12px; margin-bottom: .8rem; position: relative; }
+.booth-carousel-cue-segments { display: grid; gap: 2px; grid-template-columns: repeat(18, minmax(0, 1fr)); inset: 0; position: absolute; }
+.booth-carousel-cue-segments i { background: #315376; -webkit-mask: url("/booth-timeline-segment.svg") center / 100% 8px no-repeat; mask: url("/booth-timeline-segment.svg") center / 100% 8px no-repeat; opacity: .55; }
+.booth-carousel-cue-progress { animation: booth-cue-fill 10s linear forwards; clip-path: inset(0 100% 0 0); inset: 0; position: absolute; }
+.booth-carousel-cue-progress .booth-carousel-cue-segments i { background: oklab(72.751% -0.04331 -0.11878); opacity: .45; }
+@keyframes booth-cue-fill { to { clip-path: inset(0); } }
+.booth-carousel-slides { display: grid; }
+.booth-carousel-frames { display: grid; gap: 1rem; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.booth-carousel-slide { grid-area: 1 / 1; min-width: 0; transition: opacity .45s ease; }
+.booth-carousel-slide-current { animation: booth-carousel-in .45s ease both; }
+.booth-carousel-slide-outgoing { opacity: 0; pointer-events: none; }
+@keyframes booth-carousel-in { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .booth-carousel-slide, .booth-carousel-cue-progress { animation: none; transition: none; } .booth-carousel-cue-progress { clip-path: none; } }
+.booth-carousel-frames figure { margin: 0; min-width: 0; }
+.booth-carousel-frames img { aspect-ratio: 1; border: 2px solid #315376; display: block; object-fit: cover; width: 100%; }
+.booth-carousel-frames figure:first-child img { border-color: #ffb300; }
+.booth-carousel-frames figure:last-child img { border-color: #00e5ff; }
+.booth-carousel-frames figcaption { color: #a8c8cf; font-size: .72rem; margin-top: .45rem; overflow-wrap: anywhere; }
+.booth-carousel-frames figcaption strong { color: #d8f6ed; display: block; }
+.booth-carousel-empty { color: #a8c8cf; margin: 0; }
 .booth-heading { align-items: center; display: flex; gap: 1rem; justify-content: space-between; margin-bottom: 1rem; }
 .booth-heading h2 { margin: 0; }
 .booth-stage { display: grid; gap: 1.25rem; grid-template-columns: minmax(0, 1fr) 250px; }
@@ -277,7 +300,9 @@ input:focus, select:focus { border-color: #00e5ff; outline: 2px solid #00e5ff55;
 .booth-print-footer p { font-family: "Archivo Black", Impact, sans-serif; font-size: .78rem; line-height: 1.1; margin: .3rem 0 .2rem; }
 .booth-print-footer span { font-size: .56rem; font-weight: 700; letter-spacing: .08em; }
 .booth-result-actions { display: grid; gap: .8rem; grid-template-columns: repeat(3, minmax(0, 1fr)); margin-top: 1.4rem; }
+.booth-result-actions-saved { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .booth-result-actions > button { align-self: start; width: 100%; }
+.booth-result-actions-saved > button { align-self: end; }
 .booth-qr { min-width: 0; }
 .booth-qr a { display: block; width: fit-content; }
 .booth-qr img { aspect-ratio: 1; background: #fff; display: block; width: min(160px, 100%); }
@@ -287,6 +312,9 @@ input:focus, select:focus { border-color: #00e5ff; outline: 2px solid #00e5ff55;
   .booth-controls > .leave-turn { margin-top: 1.25rem; }
 }
 @media (max-width: 600px) {
+  .booth-carousel { padding: .75rem; }
+  .booth-carousel-frames { gap: .35rem; }
+  .booth-carousel-frames figcaption { font-size: .6rem; }
   .booth-result-actions { gap: .35rem; }
   .booth-result-actions > button { font-size: .75rem; padding: .55rem .25rem; }
 }

@@ -26,7 +26,7 @@ export default function BoothResult({ result, onEnd, ending = false }) {
         </header>
         <div className="booth-print-fish">
           <figure><img src={result.fish.imageUrl} alt={result.fish.species} /><figcaption>YOUR TARGET <strong>{result.fish.species}</strong></figcaption></figure>
-          <figure><img src={result.closestMatchFish.imageUrl} alt={result.closestMatchFish.species} /><figcaption>{result.targetWon ? <>BEST MATCH ✅✅✅</> : <>🤷 no match</>}<strong>{result.closestMatchFish.species}</strong></figcaption></figure>
+          <figure><img src={result.closestMatchFish.imageUrl} alt={result.closestMatchFish.species} /><figcaption>{result.targetWon ? <>Awesome FishFace! ✅</> : <>No match...🤷</>}<strong>{result.closestMatchFish.species}</strong></figcaption></figure>
         </div>
         <figure className="booth-print-selfie"><img src={result.imageUrl} alt={`${result.fullName || "Player"}'s FishFace selfie`} /><figcaption>THE FACE BEHIND THE FISH <span>{result.fullName}</span></figcaption></figure>
         <footer className="booth-print-footer">
@@ -36,13 +36,13 @@ export default function BoothResult({ result, onEnd, ending = false }) {
         </footer>
       </div>
     </div>
-    <div className="booth-result-actions">
+    <div className={`booth-result-actions${onEnd ? "" : " booth-result-actions-saved"}`}>
       <div className="booth-qr">
         {qrUrl && <a href={permalink} aria-label="Open this result"><img src={qrUrl} alt="QR code for this result permalink" /></a>}
         <p>Scan QR to download</p>
       </div>
       <button type="button" onClick={() => window.print()}>Print</button>
-      <button className="secondary" type="button" onClick={onEnd} disabled={ending}>{ending ? "Adding…" : "End Turn"}</button>
+      {onEnd && <button className="secondary" type="button" onClick={onEnd} disabled={ending}>{ending ? "Adding…" : "End Turn"}</button>}
     </div>
   </section>;
 }
