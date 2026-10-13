@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "build-gh-static": "bun scripts/build-gh-static.mjs",
     "start": "next start",
     "test": "bun test",
     "prep:images": "python scripts/getFish.py",
