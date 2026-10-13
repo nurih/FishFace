@@ -107,6 +107,7 @@ input:focus, select:focus { border-color: #00e5ff; outline: 2px solid #00e5ff55;
   object-fit: cover;
   width: 100%;
 }
+.camera-review img { height: 100%; object-fit: contain; width: 100%; }
 .target {
   aspect-ratio: 1;
   border: 2px solid #ffb300;
@@ -277,6 +278,7 @@ input:focus, select:focus { border-color: #00e5ff; outline: 2px solid #00e5ff55;
 .booth-switch svg { height: 1.4rem; width: 1.4rem; }
 .booth-capture { align-items: center; display: flex; justify-content: center; margin-top: .5rem; min-height: 5rem; width: 100%; }
 .booth-capture svg { height: 2.5rem; width: 2.5rem; }
+.booth-review-actions { display: grid; gap: .5rem; margin-top: .5rem; }
 .booth-controls > .leave-turn { align-self: flex-end; margin: auto 0 0; }
 .booth-print-card { aspect-ratio: 2 / 3; background: #050a1b; background-image: repeating-linear-gradient(0deg, #090f24 0 1px, #050a1b 1px 5px); color: #d8f6ed; margin: auto; max-width: 480px; padding: 3.5%; width: 100%; }
 .booth-print-frame { border: 2px solid #00e5ff; display: grid; gap: .6rem; grid-template-rows: auto auto minmax(0, 1fr) auto; height: 100%; min-height: 0; padding: 4%; }

@@ -11,9 +11,7 @@ export async function GET(request) {
     const before = new URL(request.url).searchParams.get("before");
     return await withDatabase(async (database) => {
       const submissions = database.collection(schema.submissions.name);
-      const boothFilter = { status: "scored", source: "booth" };
-      const hasBoothResult = await submissions.findOne(boothFilter, { projection: { _id: 1 } });
-      const baseFilter = hasBoothResult ? boothFilter : { status: "scored" };
+      const baseFilter = { status: "scored", selfieFileId: { $exists: true } };
       const filter = { ...baseFilter };
       if (before && ObjectId.isValid(before)) {
         const current = await submissions.findOne({ _id: new ObjectId(before), ...filter });
