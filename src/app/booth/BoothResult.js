@@ -16,14 +16,25 @@ export default function BoothResult({ result, onEnd, ending = false }) {
   }, [result.id]);
 
   return <section className="booth-result" aria-live="polite">
-    <p className="panel-code">FISHFACE PHOTO BOOTH // RESULT</p>
-    <h2>{result.fullName ? `${result.fullName}'s FishFace Photo Strip` : "FishFace Photo Strip"}</h2>
-    <p className="booth-outcome">{result.targetWon ? "Target matched!" : "Here is your closest match"}</p>
-    <p className="booth-score">Target rank #{result.assignedFishRank} · margin {result.targetMargin >= 0 ? "+" : ""}{result.targetMargin.toFixed(3)}</p>
-    <div className="booth-triple">
-      <figure><img src={result.fish.imageUrl} alt={result.fish.species} /><figcaption>YOUR TARGET<br /><strong>{result.fish.species}</strong></figcaption></figure>
-      <figure><img src={result.imageUrl} alt="Your FishFace selfie" /><figcaption>{result.fullName}</figcaption></figure>
-      <figure><img src={result.closestMatchFish.imageUrl} alt={result.closestMatchFish.species} /><figcaption>BEST MATCH<br /><strong>{result.closestMatchFish.species}</strong></figcaption></figure>
+    <div className="booth-print-card">
+      <div className="booth-print-frame">
+        <header className="booth-print-heading">
+          <p>FISHFACE PHOTO BOOTH <span>2026</span></p>
+          <h2>{result.fullName ? `${result.fullName}'s FishFace` : "FishFace"}</h2>
+          <p className="booth-print-outcome">{result.targetWon ? "TARGET MATCHED!" : "MEET YOUR BEST MATCH"}</p>
+          <p className="booth-print-score">TARGET RANK #{result.assignedFishRank} · MARGIN {result.targetMargin >= 0 ? "+" : ""}{result.targetMargin.toFixed(3)}</p>
+        </header>
+        <div className="booth-print-fish">
+          <figure><img src={result.fish.imageUrl} alt={result.fish.species} /><figcaption>YOUR TARGET <strong>{result.fish.species}</strong></figcaption></figure>
+          <figure><img src={result.closestMatchFish.imageUrl} alt={result.closestMatchFish.species} /><figcaption>{result.targetWon ? <>BEST MATCH ✅✅✅</> : <>🤷 no match</>}<strong>{result.closestMatchFish.species}</strong></figcaption></figure>
+        </div>
+        <figure className="booth-print-selfie"><img src={result.imageUrl} alt={`${result.fullName || "Player"}'s FishFace selfie`} /><figcaption>THE FACE BEHIND THE FISH <span>{result.fullName}</span></figcaption></figure>
+        <footer className="booth-print-footer">
+          <img src="/mdb-logo.svg" alt="MongoDB" />
+          <p>Build Anything. Change Everything.</p>
+          <span>FISHFACE // 2026</span>
+        </footer>
+      </div>
     </div>
     <div className="booth-result-actions">
       <div className="booth-qr">

@@ -153,8 +153,10 @@ export default function PhotoBooth() {
   return <main className="booth">
     <header className="masthead"><div><p className="eyebrow">FISHFACE PHOTO BOOTH</p><h1><span>FISH</span>FACE</h1><p className="mission">Meet your fish face. Take home the match.</p></div></header>
     {stage === "start" && <section className="card booth-intro">
-      <p className="panel-code">01 // START</p><h2>Find your fish face.</h2>
-      <p>Get a fish, take a selfie, and see which fish looks most like you.</p>
+      <p className="panel-code">01 // START</p><h2>Fish-Face Competition</h2>
+      <p>Make your best fish-face impression.</p>
+      <p>Take a selfie.</p>
+      <p>See how well your fish-face matches your target fish.</p>
       <form className="start-form" onSubmit={startTurn}>
         <label>Your name<input value={fullName} onChange={(event) => setFullName(event.target.value)} required /></label>
         <button type="submit" disabled={busy}>Let's go!</button>
