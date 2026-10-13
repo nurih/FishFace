@@ -4,13 +4,17 @@ import { withDatabase } from "@/lib/mongo";
 import schema from "@/lib/schema";
 
 export const dynamic = "force-dynamic";
+const batchSize = 12;
 
 export async function GET(request) {
   try {
     const before = new URL(request.url).searchParams.get("before");
     return await withDatabase(async (database) => {
       const submissions = database.collection(schema.submissions.name);
-      const filter = { status: "scored", source: "booth" };
+      const boothFilter = { status: "scored", source: "booth" };
+      const hasBoothResult = await submissions.findOne(boothFilter, { projection: { _id: 1 } });
+      const baseFilter = hasBoothResult ? boothFilter : { status: "scored" };
+      const filter = { ...baseFilter };
       if (before && ObjectId.isValid(before)) {
         const current = await submissions.findOne({ _id: new ObjectId(before), ...filter });
         if (current) filter.$or = [
@@ -18,12 +22,17 @@ export async function GET(request) {
           { createdAt: current.createdAt, _id: { $lt: current._id } },
         ];
       }
-      let entry = await submissions.findOne(filter, { sort: { createdAt: -1, _id: -1 } });
-      if (!entry && filter.$or) entry = await submissions.findOne({ status: "scored", source: "booth" }, { sort: { createdAt: -1, _id: -1 } });
-      return NextResponse.json({ entry: entry ? {
+      const findBatch = (query) => submissions.find(query, {
+        projection: { fullName: 1, fish: 1, selfieFileId: 1, closestMatchFish: 1 },
+      }).sort({ createdAt: -1, _id: -1 }).limit(batchSize + 1).toArray();
+      let entries = await findBatch(filter);
+      if (!entries.length && filter.$or) entries = await findBatch(baseFilter);
+      const hasMore = entries.length > batchSize;
+      entries = entries.slice(0, batchSize);
+      return NextResponse.json({ entries: entries.map((entry) => ({
         id: String(entry._id), fullName: entry.fullName, target: entry.fish,
         selfieUrl: `/api/media/selfie/${entry.selfieFileId}`, match: entry.closestMatchFish,
-      } : null });
+      })), nextBefore: hasMore ? String(entries.at(-1)._id) : null });
     });
   } catch {
     return NextResponse.json({ error: "Unable to load photo booth results." }, { status: 500 });

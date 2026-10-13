@@ -10,7 +10,8 @@ export default function BoothCarousel() {
   const [error, setError] = useState(false);
   const [loadingFirst, setLoadingFirst] = useState(true);
   const [cycle, setCycle] = useState(0);
-  const currentId = useRef(null);
+  const queued = useRef([]);
+  const nextBefore = useRef(null);
   const currentEntry = useRef(null);
   const loading = useRef(false);
   const transitionTimer = useRef(null);
@@ -19,15 +20,19 @@ export default function BoothCarousel() {
     if (loading.current) return;
     loading.current = true;
     try {
-      const query = currentId.current ? `?before=${encodeURIComponent(currentId.current)}` : "";
-      const response = await fetch(`/api/booth/gallery${query}`, { cache: "no-store" });
-      if (!response.ok) throw new Error();
-      const data = await response.json();
-      currentId.current = data.entry?.id || null;
+      if (!queued.current.length) {
+        const query = nextBefore.current ? `?before=${encodeURIComponent(nextBefore.current)}` : "";
+        const response = await fetch(`/api/booth/gallery${query}`, { cache: "no-store" });
+        if (!response.ok) throw new Error();
+        const data = await response.json();
+        queued.current = data.entries;
+        nextBefore.current = data.nextBefore;
+      }
+      const nextEntry = queued.current.shift() || null;
       window.clearTimeout(transitionTimer.current);
-      setOutgoing(currentEntry.current?.id !== data.entry?.id ? currentEntry.current : null);
-      currentEntry.current = data.entry;
-      setEntry(data.entry);
+      setOutgoing(currentEntry.current?.id !== nextEntry?.id ? currentEntry.current : null);
+      currentEntry.current = nextEntry;
+      setEntry(nextEntry);
       transitionTimer.current = window.setTimeout(() => setOutgoing(null), 450);
       setError(false);
     } catch {
