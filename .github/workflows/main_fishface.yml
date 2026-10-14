@@ -74,9 +74,9 @@ jobs:
       - name: Configure custom handler and Pages CORS
         shell: bash
         env:
-          SITE_ORIGIN: ${{ vars.FISHFACE_SITE_ORIGIN || format('https://{0}.github.io', github.repository_owner) }}
+          SITE_ORIGIN: ${{ vars.FISHFACE_SITE_ORIGIN }}
         run: |
-          resource_group=$(az functionapp list --query "[?name=='fishface'].resourceGroup | [0]" -o tsv)
+          resource_group= ${{vars.FISHFACE_AZ_RG}}
           test -n "$resource_group"
           test "$(az functionapp show -g "$resource_group" -n fishface --query reserved -o tsv)" = "true"
           az functionapp config appsettings set -g "$resource_group" -n fishface --settings FUNCTIONS_WORKER_RUNTIME=Custom --output none
