@@ -1,8 +1,22 @@
 {
     "version": "2.0",
+    "customHandler": {
+        "description": {
+            "defaultExecutablePath": "runtime/node",
+            "arguments": [
+                "node_modules/next/dist/bin/next",
+                "start",
+                "--port",
+                "%FUNCTIONS_CUSTOMHANDLER_PORT%",
+                "--hostname",
+                "127.0.0.1"
+            ]
+        },
+        "enableForwardingHttpRequest": true
+    },
     "logging": {
         "logLevel": {
-            "Function": "Information"
+            "Function": "Debug"
         }
     },
     "aggregator": {

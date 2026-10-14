@@ -1,4 +1,4 @@
-# Docs for the Azure Web Apps Deploy action: https://github.com/azure/functions-action
+# Linux Azure Functions custom handler; Node.js is included in the deployment.
 # More GitHub Actions for Azure: https://github.com/Azure/actions
 
 name: Build and deploy Node.js project to Azure Function App - fishface
@@ -10,8 +10,7 @@ on:
   workflow_dispatch:
 
 env:
-  AZURE_FUNCTIONAPP_PACKAGE_PATH: '.' # set this to the path to your web app project, defaults to the repository root
-  NODE_VERSION: '22.x' # set this to the node version to use (supports 8.x, 10.x, 12.x)
+  NODE_VERSION: '22.x'
 
 jobs:
   build:
@@ -22,21 +21,29 @@ jobs:
     steps:
       - name: 'Checkout GitHub Action'
         uses: actions/checkout@v4
-        
 
-      - name: Setup Node ${{ env.NODE_VERSION }} Environment
-        uses: oven-sh/setup-bun@v2 
 
-      - name: 'Resolve Project Dependencies Using Npm'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.2
+
+      - name: Build Next.js API server
         shell: bash
         run: |
-          pushd './${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}'
-          bun install
+          bun install --frozen-lockfile
+          bun test
           bun run build
-          popd
 
       - name: Zip artifact for deployment
-        run: zip release.zip ./* -r
+        shell: bash
+        run: |
+          mkdir runtime
+          cp "$(command -v node)" runtime/node
+          chmod +x runtime/node
+          zip -r release.zip .next node_modules public package.json next.config.mjs host.json nextApi runtime -x '.next/cache/*'
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
@@ -57,11 +64,6 @@ jobs:
         with:
           name: node-app
 
-      - name: Unzip artifact for deployment
-        run: |
-          unzip release.zip
-          rm release.zip
-      
       - name: Login to Azure
         uses: azure/login@v2
         with:
@@ -69,11 +71,22 @@ jobs:
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_4FA5658816CB4A34997206694DBCA651 }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_D2D4D4E366E6426DA2AB4C5AB1DDC143 }}
 
+      - name: Configure custom handler and Pages CORS
+        shell: bash
+        env:
+          SITE_ORIGIN: ${{ vars.FISHFACE_SITE_ORIGIN || format('https://{0}.github.io', github.repository_owner) }}
+        run: |
+          resource_group=$(az functionapp list --query "[?name=='fishface'].resourceGroup | [0]" -o tsv)
+          test -n "$resource_group"
+          test "$(az functionapp show -g "$resource_group" -n fishface --query reserved -o tsv)" = "true"
+          az functionapp config appsettings set -g "$resource_group" -n fishface --settings FUNCTIONS_WORKER_RUNTIME=Custom --output none
+          az functionapp cors add -g "$resource_group" -n fishface --allowed-origins "$SITE_ORIGIN" --output none
+
       - name: 'Run Azure Functions Action'
         uses: Azure/functions-action@v1
         id: fa
         with:
           app-name: 'fishface'
           slot-name: 'Production'
-          package: ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}
-          
+          package: release.zip
+

@@ -76,6 +76,16 @@ bun run start
 
 ## Deploy to a Node.js host
 
+### Azure Functions API and GitHub Pages UX
+
+`.github/workflows/main_fishface.yml` builds the Next.js server and deploys it to the Linux Function App `fishface`. It includes Node.js 22, dependencies, and `.next` in the ZIP. `host.json` runs `next start` directly with the bundled Node.js runtime. The HTTP trigger forwards `/api/*` requests to Next.js on `FUNCTIONS_CUSTOMHANDLER_PORT`; the public UX stays on GitHub Pages.
+
+The deploy job sets `FUNCTIONS_WORKER_RUNTIME=Custom` and adds the GitHub Pages origin to Azure CORS. Its Azure identity needs permission to update Function App settings and CORS. For a custom Pages domain, set repository variable `FISHFACE_SITE_ORIGIN` to its origin (for example, `https://fish.example.com`, with no path or trailing slash). The default is `https://<repository-owner>.github.io`.
+
+Set `MONGO_URL`, `MONGODB_DB`, and `MONGODB_ATLAS_AI_API_KEY` in the Function App environment settings. Set repository variable `FISHFACE_API_ORIGIN` to the Function App HTTPS origin, with no `/api` suffix. The Pages workflow embeds that origin in the static UX. Keep `GH_STATIC_EXPORT` unset in the Function App.
+
+### Other Node.js hosts
+
 Deploy to a host that supports a Node.js Next.js server. Configure the same three environment variables as production secrets; `MONGO_URL` must be able to reach the Atlas deployment from the host. Use `bun run build` as the build command and `bun run start` as the start command. The app is not a static export: its API routes require a running server.
 
 Before the first deployment, load the catalog and create its indexes from a machine with the production environment variables. This command drops and recreates the collections, so use it only for an empty database:
