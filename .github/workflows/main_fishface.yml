@@ -79,7 +79,12 @@ jobs:
         run: |
           test -n "$FISHFACE_SITE_ORIGIN"
           test -n "$FISHFACE_AZ_RG"
-          test "$(az functionapp show -g "$FISHFACE_AZ_RG" -n fishface --query reserved -o tsv)" = "true"
+          is_linux=$(az functionapp show -g "$FISHFACE_AZ_RG" -n fishface --query reserved -o tsv)
+          if [[ "${is_linux,,}" != "true" ]]; then
+            echo "::error::fishface must be a Linux Function App for the bundled Node.js runtime (reserved=$is_linux)."
+            exit 1
+          fi
+          FISHFACE_SITE_ORIGIN="${FISHFACE_SITE_ORIGIN%/}"
           az functionapp config appsettings set -g "$FISHFACE_AZ_RG" -n fishface --settings FUNCTIONS_WORKER_RUNTIME=Custom --output none
           az functionapp cors add -g "$FISHFACE_AZ_RG" -n fishface --allowed-origins "$FISHFACE_SITE_ORIGIN" --output none
 
