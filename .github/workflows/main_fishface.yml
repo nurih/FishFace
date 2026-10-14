@@ -75,8 +75,9 @@ jobs:
         shell: bash
         env:
           SITE_ORIGIN: ${{ vars.FISHFACE_SITE_ORIGIN }}
+          RESOURCE_GROUP:  ${{ vars.FISHFACE_AZ_RG }}
         run: |
-          resource_group= ${{vars.FISHFACE_AZ_RG}}
+          resource_group="$RESOURCE_GROUP"
           test -n "$resource_group"
           test "$(az functionapp show -g "$resource_group" -n fishface --query reserved -o tsv)" = "true"
           az functionapp config appsettings set -g "$resource_group" -n fishface --settings FUNCTIONS_WORKER_RUNTIME=Custom --output none
