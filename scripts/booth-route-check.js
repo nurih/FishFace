@@ -14,6 +14,7 @@ const submissions = {
   insertOne: async (document) => { inserted = document; return { insertedId: resultId }; },
   findOne: async (query) => {
     boothQuery = query;
+    if (query._id && !query._id.equals(resultId)) return null;
     if (query.status && query.status !== inserted.status) return null;
     if (query.source && query.source !== inserted.source) return null;
     if (query.$or && !query.$or.some((filter) => Object.entries(filter).every(([key, value]) => inserted[key] === value))) return null;
@@ -72,7 +73,7 @@ test("End Turn adds the saved booth result once to the shared leaderboard", asyn
 
   const reopened = await getBooth(null, { params: Promise.resolve({ id: String(resultId) }) });
   expect(reopened.status).toBe(200);
-  expect(boothQuery.$or).toEqual([{ status: "booth" }, { source: "booth" }]);
+  expect(boothQuery.$or).toEqual([{ status: "booth" }, { status: "scored" }, { source: "booth" }]);
   const savedResult = await reopened.json();
   expect(savedResult.fullName).toBe("Ada");
   expect(savedResult.imageUrl).toBe(`/api/media/selfie/${selfieFileId}`);
@@ -94,4 +95,24 @@ test("End Turn adds the saved booth result once to the shared leaderboard", asyn
 
 test("booth permalink rejects an invalid ID", async () => {
   expect((await getBooth(null, { params: Promise.resolve({ id: "invalid" }) })).status).toBe(404);
+});
+
+test("a scored game result opens by submission ID, not selfie file ID", async () => {
+  const form = new FormData();
+  form.append("playerId", "game-player");
+  form.append("fullName", "Ada");
+  form.append("image", new File(["image"], "selfie.jpg", { type: "image/jpeg" }));
+  form.append("publish", "true");
+
+  const saved = await POST(new Request("http://localhost/api/submit", { method: "POST", body: form }));
+  expect(saved.status).toBe(200);
+  const { id } = await saved.json();
+  expect(id).toBe(String(resultId));
+  expect(inserted.status).toBe("scored");
+  expect(inserted.source).toBeUndefined();
+
+  const reopened = await getBooth(null, { params: Promise.resolve({ id }) });
+  expect(reopened.status).toBe(200);
+  expect((await reopened.json()).imageUrl).toBe(`/api/media/selfie/${selfieFileId}`);
+  expect((await getBooth(null, { params: Promise.resolve({ id: String(selfieFileId) }) })).status).toBe(404);
 });

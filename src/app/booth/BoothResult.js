@@ -25,15 +25,14 @@ export default function BoothResult({ result, onEnd, ending = false }) {
           <p className="booth-print-outcome">{result.targetWon ? "TARGET MATCHED!" : "MEET YOUR BEST MATCH"}</p>
           <p className="booth-print-score">TARGET RANK #{result.assignedFishRank} · MARGIN {result.targetMargin >= 0 ? "+" : ""}{result.targetMargin.toFixed(3)}</p>
         </header>
-        <div className="booth-print-fish">
-          <figure><img src={result.fish.imageUrl} alt={result.fish.species} /><figcaption>YOUR TARGET <strong>{result.fish.species}</strong></figcaption></figure>
-          <figure><img src={result.closestMatchFish.imageUrl} alt={result.closestMatchFish.species} /><figcaption>{result.targetWon ? <>Awesome FishFace! ✅</> : <>No match...🤷</>}<strong>{result.closestMatchFish.species}</strong></figcaption></figure>
-        </div>
         <figure className="booth-print-selfie"><img src={result.imageUrl} alt={`${result.fullName || "Player"}'s FishFace selfie`} /><figcaption>THE FACE BEHIND THE FISH <span>{result.fullName}</span></figcaption></figure>
+        <div className="booth-print-fish">
+          <figure><img src={result.fish.imageUrl} alt={result.fish.species} /><figcaption>ATTEMPTED THIS<strong>{result.fish.species}</strong></figcaption></figure>
+          <figure><img src={result.closestMatchFish.imageUrl} alt={result.closestMatchFish.species} /><figcaption>GOT THAT ... {result.targetWon ? <> Winner!🏆</>: <> 🤷 </>}<strong>{result.closestMatchFish.species}</strong></figcaption></figure>
+        </div>
         <footer className="booth-print-footer">
-          <img src={siteUrl("/mdb-logo.svg")} alt="MongoDB" />
+          <img src={siteUrl("/Local Event Logo - Horizontal Light.svg")} alt="MongoDB" />
           <p>Build Anything. Change Everything.</p>
-          <span>FISHFACE // 2026</span>
         </footer>
       </div>
     </div>
