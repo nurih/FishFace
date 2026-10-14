@@ -80,7 +80,7 @@ bun run start
 
 `.github/workflows/main_fishface.yml` builds the Next.js server and deploys it to the Linux Function App `fishface`. It includes Node.js 22, dependencies, and `.next` in the ZIP. `host.json` runs `next start` directly with the bundled Node.js runtime. The HTTP trigger forwards `/api/*` requests to Next.js on `FUNCTIONS_CUSTOMHANDLER_PORT`; the public UX stays on GitHub Pages.
 
-The deploy job sets `FUNCTIONS_WORKER_RUNTIME=Custom` and adds the GitHub Pages origin to Azure CORS. Its Azure identity needs permission to update Function App settings and CORS. For a custom Pages domain, set repository variable `FISHFACE_SITE_ORIGIN` to its origin (for example, `https://fish.example.com`, with no path or trailing slash). The default is `https://<repository-owner>.github.io`.
+Configure `FUNCTIONS_WORKER_RUNTIME=Custom` and the allowed Pages origin in Azure. For the standard Pages URL, the CORS origin is `https://nurih.github.io` (no path or trailing slash). The workflow only builds and deploys the app.
 
 Set `MONGO_URL`, `MONGODB_DB`, and `MONGODB_ATLAS_AI_API_KEY` in the Function App environment settings. Set repository variable `FISHFACE_API_ORIGIN` to the Function App HTTPS origin, with no `/api` suffix. The Pages workflow embeds that origin in the static UX. Keep `GH_STATIC_EXPORT` unset in the Function App.
 

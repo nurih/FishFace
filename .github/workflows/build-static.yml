@@ -3,6 +3,14 @@ name: Deploy Next.js site to Pages
 on:
   push:
     branches: [main]
+    paths:
+      - 'src/**'
+      - 'public/**'
+      - 'data/**'
+      - '*.json'
+      - '*.mjs'
+      - '*.js'
+      - 'nextApi/**'
   workflow_dispatch:
 
 permissions:

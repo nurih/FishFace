@@ -7,6 +7,14 @@ on:
   push:
     branches:
       - 'main'
+    paths:
+      - 'src/**'
+      - 'public/**'
+      - 'data/*'
+      - '*.json'
+      - '*.mjs'
+      - '*.js'
+      - 'nextApi/**'
   workflow_dispatch:
 
 env:
@@ -70,23 +78,6 @@ jobs:
           client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_A730925492C54096986E878D05FC9B5C }}
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_4FA5658816CB4A34997206694DBCA651 }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_D2D4D4E366E6426DA2AB4C5AB1DDC143 }}
-
-      - name: Configure custom handler and Pages CORS
-        shell: bash
-        env:
-          FISHFACE_SITE_ORIGIN: ${{ vars.FISHFACE_SITE_ORIGIN }}
-          FISHFACE_AZ_RG:  ${{ vars.FISHFACE_AZ_RG }}
-        run: |
-          test -n "$FISHFACE_SITE_ORIGIN"
-          test -n "$FISHFACE_AZ_RG"
-          is_linux=$(az functionapp show -g "$FISHFACE_AZ_RG" -n fishface --query reserved -o tsv)
-          if [[ "${is_linux,,}" != "true" ]]; then
-            echo "::error::fishface must be a Linux Function App for the bundled Node.js runtime (reserved=$is_linux)."
-            exit 1
-          fi
-          FISHFACE_SITE_ORIGIN="${FISHFACE_SITE_ORIGIN%/}"
-          az functionapp config appsettings set -g "$FISHFACE_AZ_RG" -n fishface --settings FUNCTIONS_WORKER_RUNTIME=Custom --output none
-          az functionapp cors add -g "$FISHFACE_AZ_RG" -n fishface --allowed-origins "$FISHFACE_SITE_ORIGIN" --output none
 
       - name: 'Run Azure Functions Action'
         uses: Azure/functions-action@v1
