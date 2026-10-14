@@ -204,4 +204,8 @@ dist
 !/src/lib/
 !/src/lib/**
 
+# API routes are source, even when a global ignore excludes publish directories.
+!/src/app/api/booth/\[id\]/publish/
+!/src/app/api/booth/\[id\]/publish/route.js
+
 /.bun-cache/

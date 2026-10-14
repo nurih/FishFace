@@ -1,7 +1,7 @@
 # Linux Azure Functions custom handler; Node.js is included in the deployment.
 # More GitHub Actions for Azure: https://github.com/Azure/actions
 
-name: Build and deploy Node.js project to Azure Function App - fishface
+name: Azure Function App - fishface
 
 on:
   push:
