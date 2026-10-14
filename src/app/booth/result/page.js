@@ -1,14 +1,18 @@
 "use client";
 
+import { apiFetch as fetch } from "@/lib/api-client";
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
-import BoothResult from "../../BoothResult";
+import BoothResult from "../BoothResult";
 
 export default function SavedBoothResult() {
-  const { id } = useParams();
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
   useEffect(() => {
+    const id = new URLSearchParams(window.location.search).get("id");
+    if (!id) {
+      setError("Result not found.");
+      return;
+    }
     fetch(`/api/booth/${encodeURIComponent(id)}`)
       .then(async (response) => {
         if (!response.ok) throw new Error(response.status === 404 ? "Result not found." : "Unable to load result.");
@@ -16,7 +20,7 @@ export default function SavedBoothResult() {
       })
       .then(setResult)
       .catch((caught) => setError(caught.message));
-  }, [id]);
+  }, []);
 
   return <main className="booth">
     <header className="masthead"><div><p className="eyebrow">FISHFACE PHOTO BOOTH</p><h1><span>FISH</span>FACE</h1></div></header>

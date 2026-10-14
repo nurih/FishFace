@@ -46,6 +46,21 @@ if (exitCode) process.exit(exitCode);
 
 await rm(output, { recursive: true, force: true });
 await cp(path.join(stage, "out"), output, { recursive: true });
+const notFoundFile = path.join(output, "404.html");
+const notFound = await readFile(notFoundFile, "utf8");
+const resultRedirect = `<script>
+(() => {
+  const resultPath = ${JSON.stringify(`${basePath}/booth/result`)};
+  const pathname = window.location.pathname;
+  if (!pathname.startsWith(resultPath + "/")) return;
+  const id = pathname.slice(resultPath.length + 1).replace(/\\/$/, "");
+  if (!id || id.includes("/")) return;
+  const query = new URLSearchParams(window.location.search);
+  query.set("id", decodeURIComponent(id));
+  window.location.replace(resultPath + "/?" + query + window.location.hash);
+})();
+</script>`;
+await writeFile(notFoundFile, notFound.replace("<head>", "<head>" + resultRedirect));
 await writeFile(path.join(output, ".nojekyll"), "");
 await rm(stage, { recursive: true });
 console.log(`Static site written to ${output}`);

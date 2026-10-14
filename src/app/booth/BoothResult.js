@@ -1,5 +1,6 @@
 "use client";
 
+import { siteUrl } from "@/lib/api-client";
 import { useEffect, useState } from "react";
 import QRCode from "qrcode";
 
@@ -8,7 +9,7 @@ export default function BoothResult({ result, onEnd, ending = false }) {
   const [qrUrl, setQrUrl] = useState("");
 
   useEffect(() => {
-    const url = new URL(`/booth/result/${result.id}`, window.location.origin).toString();
+    const url = new URL(siteUrl(`/booth/result/?id=${encodeURIComponent(result.id)}`), window.location.origin).toString();
     setPermalink(url);
     QRCode.toDataURL(url, { width: 220, margin: 2 })
       .then(setQrUrl)
@@ -30,7 +31,7 @@ export default function BoothResult({ result, onEnd, ending = false }) {
         </div>
         <figure className="booth-print-selfie"><img src={result.imageUrl} alt={`${result.fullName || "Player"}'s FishFace selfie`} /><figcaption>THE FACE BEHIND THE FISH <span>{result.fullName}</span></figcaption></figure>
         <footer className="booth-print-footer">
-          <img src="/mdb-logo.svg" alt="MongoDB" />
+          <img src={siteUrl("/mdb-logo.svg")} alt="MongoDB" />
           <p>Build Anything. Change Everything.</p>
           <span>FISHFACE // 2026</span>
         </footer>

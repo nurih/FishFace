@@ -35,7 +35,7 @@ Rounds last four hours. A player keeps one assigned fish per round unless they c
 
 ## Photo Booth
 
-Open `/booth` directly for a separate flow. Enter a name, start a turn, switch fish if desired, and take a selfie. The booth scores and saves the result immediately, then shows a named photostrip with the target fish, selfie, best match, QR permalink, and print action. End Turn adds the result to the shared leaderboard and returns to the booth start screen. The booth does not display a leaderboard. Saved results remain public at `/booth/result/<id>`.
+Open `/booth` directly for a separate flow. Enter a name, start a turn, switch fish if desired, and take a selfie. The booth scores and saves the result immediately, then shows a named photostrip with the target fish, selfie, best match, QR permalink, and print action. End Turn adds the result to the shared leaderboard and returns to the booth start screen. The booth does not display a leaderboard. Saved results remain public at `/booth/result?id=<id>` (with an optional trailing slash). `/booth/result/<id>` redirects to the query URL, including on GitHub Pages.
 
 ## Local development
 
@@ -65,6 +65,8 @@ Run the test suite and production build with:
 bun test
 bun run build
 ```
+
+To build the GitHub Pages site into `out/`, set `FISHFACE_API_ORIGIN` to the Azure Function App origin and run `bun run build-gh-static`. The build uses `/FishFace` as the site path by default. Set `FISHFACE_BASE_PATH` to another path, or to an empty string for a root domain. The Pages workflow reads the repository variable `FISHFACE_API_ORIGIN` and uses the Pages base path. Local development still uses same-origin API requests.
 
 To run the built app locally:
 

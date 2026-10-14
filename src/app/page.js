@@ -1,5 +1,6 @@
 "use client";
 
+import { apiFetch as fetch } from "@/lib/api-client";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 const playerKey = "fishface-player-id";
