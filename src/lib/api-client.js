@@ -5,6 +5,8 @@ export const siteUrl = (path) => siteBasePath + path;
 
 function resolveUrls(value) {
   if (typeof value === "string") {
+    const fishImage = value.match(/^\/api\/media\/fish\/(fish-[\w-]+\.(?:jpg|jpeg|png|webp))$/i);
+    if (fishImage) return siteUrl(`/fish/${fishImage[1]}`);
     if (value.startsWith("/api/")) return apiOrigin + value;
     if (value.startsWith("/fish/")) return siteUrl(value);
     return value;
