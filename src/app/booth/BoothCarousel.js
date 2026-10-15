@@ -1,6 +1,6 @@
 "use client";
 
-import { apiFetch as fetch } from "@/lib/api-client";
+import { boothGalleryCache } from "@/lib/booth-gallery-cache";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 const segments = Array.from({ length: 18 }, (_, index) => <i key={index} />);
@@ -11,25 +11,16 @@ export default function BoothCarousel() {
   const [error, setError] = useState(false);
   const [loadingFirst, setLoadingFirst] = useState(true);
   const [cycle, setCycle] = useState(0);
-  const queued = useRef([]);
-  const nextBefore = useRef(null);
+  const [visible, setVisible] = useState(false);
   const currentEntry = useRef(null);
   const loading = useRef(false);
   const transitionTimer = useRef(null);
 
   const advance = useCallback(async () => {
-    if (loading.current) return;
+    if (loading.current || document.hidden) return;
     loading.current = true;
     try {
-      if (!queued.current.length) {
-        const query = nextBefore.current ? `?before=${encodeURIComponent(nextBefore.current)}` : "";
-        const response = await fetch(`/api/booth/gallery${query}`, { cache: "no-store" });
-        if (!response.ok) throw new Error();
-        const data = await response.json();
-        queued.current = data.entries;
-        nextBefore.current = data.nextBefore;
-      }
-      const nextEntry = queued.current.shift() || null;
+      const nextEntry = await boothGalleryCache.next();
       window.clearTimeout(transitionTimer.current);
       setOutgoing(currentEntry.current?.id !== nextEntry?.id ? currentEntry.current : null);
       currentEntry.current = nextEntry;
@@ -46,15 +37,38 @@ export default function BoothCarousel() {
   }, []);
 
   useEffect(() => {
-    advance();
-    return () => window.clearTimeout(transitionTimer.current);
-  }, [advance]);
+    const updateVisibility = () => setVisible(!document.hidden);
+    updateVisibility();
+    document.addEventListener("visibilitychange", updateVisibility);
+    return () => {
+      document.removeEventListener("visibilitychange", updateVisibility);
+      window.clearTimeout(transitionTimer.current);
+    };
+  }, []);
 
   useEffect(() => {
-    if (!cycle) return;
-    const timer = window.setTimeout(advance, 10000);
+    if (!visible) return;
+    let cancelled = false;
+    const refresh = async () => {
+      if (document.hidden) return;
+      try {
+        await boothGalleryCache.refresh();
+        if (!cancelled) setError(false);
+      } catch {
+        if (!cancelled) setError(true);
+      }
+    };
+    refresh();
+    advance();
+    const timer = window.setInterval(refresh, 60000);
+    return () => { cancelled = true; window.clearInterval(timer); };
+  }, [advance, visible]);
+
+  useEffect(() => {
+    if (!visible || !cycle) return;
+    const timer = window.setTimeout(advance, 20000);
     return () => window.clearTimeout(timer);
-  }, [advance, cycle]);
+  }, [advance, cycle, visible]);
 
   return <section className="card booth-carousel" aria-label="Photo booth gallery">
     <div className="booth-carousel-heading">

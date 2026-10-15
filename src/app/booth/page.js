@@ -4,6 +4,7 @@ import { apiFetch as fetch } from "@/lib/api-client";
 import { useCallback, useEffect, useRef, useState } from "react";
 import BoothResult from "./BoothResult";
 import BoothCarousel from "./BoothCarousel";
+import { boothGalleryCache } from "@/lib/booth-gallery-cache";
 
 export default function PhotoBooth() {
   const videoRef = useRef(null);
@@ -167,6 +168,7 @@ export default function PhotoBooth() {
     try {
       const response = await fetch(`/api/booth/${result.id}/publish`, { method: "POST" });
       if (!response.ok) throw new Error("Unable to finish this turn.");
+      boothGalleryCache.invalidate();
       endTurn();
     } catch (caught) {
       setError(caught.message);

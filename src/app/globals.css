@@ -248,7 +248,7 @@ input:focus, select:focus { border-color: #00e5ff; outline: 2px solid #00e5ff55;
 .booth-carousel-cue { height: 12px; margin-bottom: .8rem; position: relative; }
 .booth-carousel-cue-segments { display: grid; gap: 2px; grid-template-columns: repeat(18, minmax(0, 1fr)); inset: 0; position: absolute; }
 .booth-carousel-cue-segments i { background: #315376; -webkit-mask: url("/booth-timeline-segment.svg") center / 100% 8px no-repeat; mask: url("/booth-timeline-segment.svg") center / 100% 8px no-repeat; opacity: .55; }
-.booth-carousel-cue-progress { animation: booth-cue-fill 10s linear forwards; clip-path: inset(0 100% 0 0); inset: 0; position: absolute; }
+.booth-carousel-cue-progress { animation: booth-cue-fill 20s linear forwards; clip-path: inset(0 100% 0 0); inset: 0; position: absolute; }
 .booth-carousel-cue-progress .booth-carousel-cue-segments i { background: oklab(72.751% -0.04331 -0.11878); opacity: .45; }
 @keyframes booth-cue-fill { to { clip-path: inset(0); } }
 .booth-carousel-slides { display: grid; }
